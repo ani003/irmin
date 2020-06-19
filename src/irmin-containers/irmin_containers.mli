@@ -47,4 +47,31 @@ module Counter : sig
 
 end
 
+module Lww_register : sig
+  (** API for LWW register *)
+
+  module type Input = sig 
+    include Lww_register.Input
+  end
+
+  module type S = sig
+    include Lww_register.S
+  end
+
+  module Make (Backend : Irmin.S_MAKER)
+              (M : Irmin.Metadata.S)
+              (P : Irmin.Path.S)
+              (B : Irmin.Branch.S)
+              (H : Irmin.Hash.S)
+              (V : Input)
+    :
+      S with type value = V.t
+         and type key = P.t 
+         and type branch = B.t
+
+  module Quick (V : Input) : S with type value = V.t
+                                and type key = string list
+                                and type branch = string
+end
+
 
