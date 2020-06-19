@@ -24,21 +24,20 @@ module Containers : sig
     include Containers.S
   end
 
-  module Make (Backend : Irmin.S_MAKER) 
-              (M : Irmin.Metadata.S) 
-              (C : Irmin.Contents.S)             
-              (P : Irmin.Path.S) 
-              (B : Irmin.Branch.S) 
-              (H : Irmin.Hash.S) 
-            
-    :
-      S with type t = Backend(M)(C)(P)(B)(H).t
-         and type repo = Backend(M)(C)(P)(B)(H).repo
-         and type branch = B.t 
-         and type key = P.t
-         and type contents = C.t
-         and module Store = Backend(M)(C)(P)(B)(H)
-
+  module Make
+      (Backend : Irmin.S_MAKER)
+      (M : Irmin.Metadata.S)
+      (C : Irmin.Contents.S)
+      (P : Irmin.Path.S)
+      (B : Irmin.Branch.S)
+      (H : Irmin.Hash.S) :
+    S
+      with type t = Backend(M)(C)(P)(B)(H).t
+       and type repo = Backend(M)(C)(P)(B)(H).repo
+       and type branch = B.t
+       and type key = P.t
+       and type contents = C.t
+       and module Store = Backend(M)(C)(P)(B)(H)
 end
 
 module Counter : sig
@@ -48,26 +47,25 @@ module Counter : sig
     include Counter.S
   end
 
-  module Make (Backend : Irmin.S_MAKER)
-              (M : Irmin.Metadata.S)
-              (P : Irmin.Path.S) 
-              (B : Irmin.Branch.S) 
-              (H : Irmin.Hash.S)
-    :  
-      S with type value = int64
-         and type key = P.t
-         and type branch = B.t
+  module Make
+      (Backend : Irmin.S_MAKER)
+      (M : Irmin.Metadata.S)
+      (P : Irmin.Path.S)
+      (B : Irmin.Branch.S)
+      (H : Irmin.Hash.S) :
+    S with type value = int64 and type key = P.t and type branch = B.t
 
-  module Quick : S with type value = int64
-                    and type branch = string
-                    and type key = string list
-
+  module Quick :
+    S
+      with type value = int64
+       and type branch = string
+       and type key = string list
 end
 
 module Lww_register : sig
   (** API for LWW register *)
 
-  module type Input = sig 
+  module type Input = sig
     include Lww_register.Input
   end
 
@@ -75,20 +73,15 @@ module Lww_register : sig
     include Lww_register.S
   end
 
-  module Make (Backend : Irmin.S_MAKER)
-              (M : Irmin.Metadata.S)
-              (P : Irmin.Path.S)
-              (B : Irmin.Branch.S)
-              (H : Irmin.Hash.S)
-              (V : Input)
-    :
-      S with type value = V.t
-         and type key = P.t 
-         and type branch = B.t
+  module Make
+      (Backend : Irmin.S_MAKER)
+      (M : Irmin.Metadata.S)
+      (P : Irmin.Path.S)
+      (B : Irmin.Branch.S)
+      (H : Irmin.Hash.S)
+      (V : Input) :
+    S with type value = V.t and type key = P.t and type branch = B.t
 
-  module Quick (V : Input) : S with type value = V.t
-                                and type key = string list
-                                and type branch = string
+  module Quick (V : Input) :
+    S with type value = V.t and type key = string list and type branch = string
 end
-
-
