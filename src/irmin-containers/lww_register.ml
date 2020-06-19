@@ -54,7 +54,7 @@ module LWW (V : Input) : Irmin.Contents.S with type t = V.t * Time.t = struct
     let res = Time.compare t1 t2 in
     if res = 0 then V.compare v1 v2 else res
 
-  let merge ~old v1 v2 =
+  let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
     if compare v1 v2 > 0 then ok v1 else ok v2
 
