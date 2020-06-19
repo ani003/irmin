@@ -30,7 +30,7 @@ end = struct
   module Repo = Containers.Make(Backend)(M)(Counter)(P)(B)(H)
   include Repo
 
-  type value = Type.t
+  type value = Counter.t
 
   let modify by t path fn = 
     Store.find t path >>= function
