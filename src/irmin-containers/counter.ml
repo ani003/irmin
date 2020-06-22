@@ -38,8 +38,6 @@ module type S = sig
 
   val dec : ?by:int64 -> t -> path:key -> unit Lwt.t
 
-  val set : ?v:int64 -> t -> path:key -> unit Lwt.t
-
   val read : t -> path:key -> value Lwt.t
 end
 
@@ -64,8 +62,6 @@ end = struct
   let inc ?(by = 1L) t ~path = modify by t path (fun x by -> Int64.add x by)
 
   let dec ?(by = 1L) t ~path = modify by t path (fun x by -> Int64.sub x by)
-
-  let set ?(v = 0L) t ~path = Store.set_exn ~info:(info "set") t path v
 
   let read t ~path =
     Store.find t path >>= function None -> return 0L | Some v -> return v

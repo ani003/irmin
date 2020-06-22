@@ -29,9 +29,6 @@ module type S = sig
   val dec : ?by:int64 -> t -> path:key -> unit Lwt.t
   (** Decrement the counter by the given amount. Default 1L *)
 
-  val set : ?v:int64 -> t -> path:key -> unit Lwt.t
-  (** Set the counter to the given value. Default 0L *)
-
   val read : t -> path:key -> value Lwt.t
   (** Read the value of the counter *)
 end
