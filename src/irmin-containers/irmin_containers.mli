@@ -30,14 +30,7 @@ module Containers : sig
       (C : Irmin.Contents.S)
       (P : Irmin.Path.S)
       (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S) :
-    S
-      with type t = Backend(M)(C)(P)(B)(H).t
-       and type repo = Backend(M)(C)(P)(B)(H).repo
-       and type branch = B.t
-       and type key = P.t
-       and type contents = C.t
-       and module Store = Backend(M)(C)(P)(B)(H)
+      (H : Irmin.Hash.S) : S with module Store = Backend(M)(C)(P)(B)(H)
 end
 
 module Counter : sig
@@ -53,13 +46,16 @@ module Counter : sig
       (P : Irmin.Path.S)
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S) :
-    S with type value = int64 and type key = P.t and type branch = B.t
+    S
+      with type value = int64
+       and type Store.key = P.t
+       and type Store.branch = B.t
 
   module Quick :
     S
       with type value = int64
-       and type branch = string
-       and type key = string list
+       and type Store.key = string list
+       and type Store.branch = string
 end
 
 module Lww_register : sig
@@ -80,8 +76,11 @@ module Lww_register : sig
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S)
       (V : Input) :
-    S with type value = V.t and type key = P.t and type branch = B.t
+    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
   module Quick (V : Input) :
-    S with type value = V.t and type key = string list and type branch = string
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
 end

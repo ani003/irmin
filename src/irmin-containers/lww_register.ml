@@ -66,9 +66,9 @@ module type S = sig
 
   type value
 
-  val read : t -> path:key -> value option Lwt.t
+  val read : Store.t -> path:Store.key -> value option Lwt.t
 
-  val write : t -> path:key -> value -> unit Lwt.t
+  val write : Store.t -> path:Store.key -> value -> unit Lwt.t
 end
 
 module Make
@@ -78,7 +78,8 @@ module Make
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
     (V : Input) : sig
-  include S with type value = V.t and type key = P.t and type branch = B.t
+  include
+    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 end = struct
   module Repo = Containers.Make (Backend) (M) (LWW (V)) (P) (B) (H)
   include Repo
@@ -97,7 +98,10 @@ end
 
 module Quick (V : Input) : sig
   include
-    S with type value = V.t and type key = string list and type branch = string
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
 end =
   Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)

@@ -23,13 +23,13 @@ module type S = sig
   type value
   (** Type of value as seen by the user *)
 
-  val inc : ?by:int64 -> t -> path:key -> unit Lwt.t
+  val inc : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
   (** Increment the counter by the given amount. Default 1L *)
 
-  val dec : ?by:int64 -> t -> path:key -> unit Lwt.t
+  val dec : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
   (** Decrement the counter by the given amount. Default 1L *)
 
-  val read : t -> path:key -> value Lwt.t
+  val read : Store.t -> path:Store.key -> value Lwt.t
   (** Read the value of the counter *)
 end
 
@@ -39,8 +39,11 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S) :
-  S with type value = int64 and type key = P.t and type branch = B.t
+  S with type value = int64 and type Store.key = P.t and type Store.branch = B.t
 
 (** With suitable instantiations to quickly use counter *)
 module Quick :
-  S with type value = int64 and type branch = string and type key = string list
+  S
+    with type value = int64
+     and type Store.key = string list
+     and type Store.branch = string

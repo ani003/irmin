@@ -32,10 +32,10 @@ module type S = sig
   type value
   (** Type of value stored in the register *)
 
-  val read : t -> path:key -> value option Lwt.t
+  val read : Store.t -> path:Store.key -> value option Lwt.t
   (** Reads the value from the register. Returns None if no value is written *)
 
-  val write : t -> path:key -> value -> unit Lwt.t
+  val write : Store.t -> path:Store.key -> value -> unit Lwt.t
   (** Writes value to the LWW register *)
 end
 
@@ -46,8 +46,11 @@ module Make
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
     (V : Input) :
-  S with type value = V.t and type key = P.t and type branch = B.t
+  S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
 (** With suitable instantiations to quickly use LWW register *)
 module Quick (V : Input) :
-  S with type value = V.t and type key = string list and type branch = string
+  S
+    with type value = V.t
+     and type Store.key = string list
+     and type Store.branch = string
