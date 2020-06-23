@@ -24,6 +24,16 @@ module type Input = sig
   (** Comparator for values of type t *)
 end
 
+module type Time = sig
+  type t
+
+  val t : t Irmin.Type.t
+
+  val compare : t -> t -> int
+
+  val get_time : unit -> t
+end
+
 module type S = sig
   (** Signature of the LWW register *)
 
@@ -35,7 +45,8 @@ module type S = sig
   val read : Store.t -> path:Store.key -> value option Lwt.t
   (** Reads the value from the register. Returns None if no value is written *)
 
-  val write : info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+  val write :
+    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
   (** Writes value to the LWW register *)
 end
 
@@ -45,6 +56,7 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
+    (T : Time)
     (V : Input) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 

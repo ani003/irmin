@@ -25,7 +25,7 @@ module type Input = sig
   val compare : t -> t -> int
 end
 
-module Time : sig
+module type Time = sig
   type t
 
   val t : t Irmin.Type.t
@@ -33,23 +33,16 @@ module Time : sig
   val compare : t -> t -> int
 
   val get_time : unit -> t
-end = struct
-  type t = int64
-
-  let t = Irmin.Type.int64
-
-  let compare = Int64.compare
-
-  let get_time () = Unix.gettimeofday () |> Int64.of_float
 end
 
-module LWW (V : Input) : Irmin.Contents.S with type t = V.t * Time.t = struct
-  type t = V.t * Time.t
+module LWW (T : Time) (V : Input) : Irmin.Contents.S with type t = V.t * T.t =
+struct
+  type t = V.t * T.t
 
-  let t = Irmin.Type.(pair V.t Time.t)
+  let t = Irmin.Type.(pair V.t T.t)
 
   let compare (v1, t1) (v2, t2) =
-    let res = Time.compare t1 t2 in
+    let res = T.compare t1 t2 in
     if res = 0 then V.compare v1 v2 else res
 
   let merge ~old:_ v1 v2 =
@@ -66,7 +59,8 @@ module type S = sig
 
   val read : Store.t -> path:Store.key -> value option Lwt.t
 
-  val write : info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+  val write :
+    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
 end
 
 module Make
@@ -75,11 +69,12 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
+    (T : Time)
     (V : Input) : sig
   include
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 end = struct
-  module Repo = Containers.Make (Backend) (M) (LWW (V)) (P) (B) (H)
+  module Repo = Containers.Make (Backend) (M) (LWW (T) (V)) (P) (B) (H)
   include Repo
 
   type value = V.t
@@ -90,8 +85,18 @@ end = struct
     | Some (v, _) -> return (Some v)
 
   let write ~info t ~path v =
-    let timestamp = Time.get_time () in
+    let timestamp = T.get_time () in
     Store.set_exn ~info t path (v, timestamp)
+end
+
+module QuickTime : Time = struct
+  type t = int64
+
+  let t = Irmin.Type.int64
+
+  let compare = Int64.compare
+
+  let get_time () = Unix.gettimeofday () |> Int64.of_float
 end
 
 module Quick (V : Input) : sig
@@ -104,4 +109,5 @@ end =
   Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)
     (Irmin.Hash.SHA1)
+    (QuickTime)
     (V)
