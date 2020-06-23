@@ -65,6 +65,10 @@ module Lww_register : sig
     include Lww_register.Input
   end
 
+  module type Time = sig
+    include Lww_register.Time
+  end
+
   module type S = sig
     include Lww_register.S
   end
@@ -75,6 +79,7 @@ module Lww_register : sig
       (P : Irmin.Path.S)
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S)
+      (T : Time)
       (V : Input) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
