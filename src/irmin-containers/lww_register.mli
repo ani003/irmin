@@ -35,7 +35,7 @@ module type S = sig
   val read : Store.t -> path:Store.key -> value option Lwt.t
   (** Reads the value from the register. Returns None if no value is written *)
 
-  val write : Store.t -> path:Store.key -> value -> unit Lwt.t
+  val write : info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
   (** Writes value to the LWW register *)
 end
 

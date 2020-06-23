@@ -19,8 +19,6 @@ open Lwt.Infix
 
 let return = Lwt.return
 
-let info = Irmin_unix.info
-
 module Counter : Irmin.Contents.S with type t = int64 = struct
   type t = int64
 
@@ -34,9 +32,9 @@ module type S = sig
 
   type value
 
-  val inc : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
+  val inc : ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
 
-  val dec : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
+  val dec : ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
 
   val read : Store.t -> path:Store.key -> value Lwt.t
 end
@@ -58,14 +56,14 @@ end = struct
 
   type value = Counter.t
 
-  let modify by t path fn =
+  let modify by info t path fn =
     Store.find t path >>= function
-    | None -> Store.set_exn ~info:(info "init set") t path (fn 0L by)
-    | Some v -> Store.set_exn ~info:(info "update") t path (fn v by)
+    | None -> Store.set_exn ~info t path (fn 0L by)
+    | Some v -> Store.set_exn ~info t path (fn v by)
 
-  let inc ?(by = 1L) t ~path = modify by t path (fun x by -> Int64.add x by)
+  let inc ?(by = 1L) ~info t ~path = modify by info t path (fun x by -> Int64.add x by)
 
-  let dec ?(by = 1L) t ~path = modify by t path (fun x by -> Int64.sub x by)
+  let dec ?(by = 1L) ~info t ~path = modify by info t path (fun x by -> Int64.sub x by)
 
   let read t ~path =
     Store.find t path >>= function None -> return 0L | Some v -> return v

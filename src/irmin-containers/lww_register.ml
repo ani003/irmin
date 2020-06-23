@@ -19,8 +19,6 @@ open Lwt.Infix
 
 let return = Lwt.return
 
-let info = Irmin_unix.info
-
 module type Input = sig
   include Irmin.Type.S
 
@@ -68,7 +66,7 @@ module type S = sig
 
   val read : Store.t -> path:Store.key -> value option Lwt.t
 
-  val write : Store.t -> path:Store.key -> value -> unit Lwt.t
+  val write : info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
 end
 
 module Make
@@ -91,9 +89,9 @@ end = struct
     | None -> return None
     | Some (v, _) -> return (Some v)
 
-  let write t ~path v =
+  let write ~info t ~path v =
     let timestamp = Time.get_time () in
-    Store.set_exn ~info:(info "writing") t path (v, timestamp)
+    Store.set_exn ~info t path (v, timestamp)
 end
 
 module Quick (V : Input) : sig

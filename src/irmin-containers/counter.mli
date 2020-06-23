@@ -23,10 +23,10 @@ module type S = sig
   type value
   (** Type of value as seen by the user *)
 
-  val inc : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
+  val inc : ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
   (** Increment the counter by the given amount. Default 1L *)
 
-  val dec : ?by:value -> Store.t -> path:Store.key -> unit Lwt.t
+  val dec : ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
   (** Decrement the counter by the given amount. Default 1L *)
 
   val read : Store.t -> path:Store.key -> value Lwt.t
