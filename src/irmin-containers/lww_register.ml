@@ -90,13 +90,13 @@ end = struct
 end
 
 module QuickTime : Time = struct
-  type t = int64
+  type t = float
 
-  let t = Irmin.Type.int64
+  let t = Irmin.Type.float
 
-  let compare = Int64.compare
+  let compare = Float.compare
 
-  let get_time () = Unix.gettimeofday () |> Int64.of_float
+  let get_time () = Unix.gettimeofday ()
 end
 
 module Quick (V : Input) : sig
