@@ -1,0 +1,4 @@
+(executable
+ (name test)
+ (libraries digestif.c checkseum.c irmin irmin-unix irmin-containers)
+ (modules test counter lww_register))
