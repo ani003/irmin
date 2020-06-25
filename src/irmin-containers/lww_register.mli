@@ -15,29 +15,44 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-module type Input = sig
-  (** Signature for the input argument *)
+(** Lww_register is the implementation of last-write-wins register. The value to
+    be stored in the register and the timestamp method are provided by the user.
+    Merge semantics : The value with the largest timestamp is chosen. If two
+    values have the same timestamp, then the larger value is selected based on
+    the compare specified by the user. *)
 
+(** Input specifies the type of value to be stored in the register. *)
+module type Input = sig
   include Irmin.Type.S
+  (** Type information about the value to be stored. *)
 
   val compare : t -> t -> int
-  (** Comparator for values of type t *)
+  (** Comparator for values of the type specified above. This is used to break
+      ties while merging *)
 end
 
+(** Time specifies the method to obtain timestamps for the values to be stored.
+    It is necessary for the timestamps to be monotonic for the register to
+    function properly. *)
 module type Time = sig
   type t
+  (** Type of the timestamp *)
 
   val t : t Irmin.Type.t
+  (** Corresponding irmin type of the timestamp *)
 
   val compare : t -> t -> int
+  (** Comparator for the timestamps. Used to decide the last entry to the
+      register.*)
 
   val get_time : unit -> t
+  (** Returns a timestamp *)
 end
 
+(** Signature of the last-write-wins register. *)
 module type S = sig
-  (** Signature of the LWW register *)
-
   include Containers.S
+  (** General store related functions. *)
 
   type value
   (** Type of value stored in the register *)
@@ -47,9 +62,11 @@ module type S = sig
 
   val write :
     info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
-  (** Writes value to the LWW register *)
+  (** Writes the provided value to the register *)
 end
 
+(** Make returns a mergeable last-write-wins register using the backend and
+    other parameters as specified by the user. *)
 module Make
     (Backend : Irmin.S_MAKER)
     (M : Irmin.Metadata.S)
@@ -60,7 +77,11 @@ module Make
     (V : Input) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
-(** With suitable instantiations to quickly use LWW register *)
+(** Quick is the ready-to-use mergeable last-write-wins register. Input must be
+    provided by the user to specify the type of value being stored. The register
+    is made using the FS backend from Irmin_unix and default implementaions of
+    other parameters available in Irmin. The timestamp is obtained using
+    Unix.gettimeofday *)
 module Quick (V : Input) :
   S
     with type value = V.t

@@ -15,26 +15,32 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+(** Counter is the implementation of an int64 counter. Merge semantics is as
+    follows: if old is the value of the LCA and v1 and v2 are the current
+    values, then the merged value is v1 + v2 - old. *)
 module type S = sig
-  (** Signature of counter *)
-
   include Containers.S
+  (** General store related functions *)
 
   type value
   (** Type of value as seen by the user *)
 
   val inc :
     ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
-  (** Increment the counter by the given amount. Default 1L *)
+  (** Increment the counter by the amount specified using `by`. If no value is
+      specified, then `by` is assigned the value 1L. *)
 
   val dec :
     ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
-  (** Decrement the counter by the given amount. Default 1L *)
+  (** Decrement the counter by the amount specified using `by`. If no value is
+      specified, then `by` is assigned the value 1L. *)
 
   val read : Store.t -> path:Store.key -> value Lwt.t
   (** Read the value of the counter *)
 end
 
+(** Make returns a mergeable counter using the backend and other parameters as
+    specified by the user. *)
 module Make
     (Backend : Irmin.S_MAKER)
     (M : Irmin.Metadata.S)
@@ -43,7 +49,9 @@ module Make
     (H : Irmin.Hash.S) :
   S with type value = int64 and type Store.key = P.t and type Store.branch = B.t
 
-(** With suitable instantiations to quickly use counter *)
+(** Quick is the ready-to-use mergeable counter. The counter is made using the
+    FS backend from Irmin_unix and default implementaions of other parameters
+    available in Irmin *)
 module Quick :
   S
     with type value = int64

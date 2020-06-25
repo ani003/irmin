@@ -15,16 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+(** Signature which is shared among all the data structures. *)
 module type S = sig
-  (** Signature which all containers must satisfy *)
-
   module Store : Irmin.S
-  (** Store is a contents store *)
+  (** Store is the contents store of the data structures. All store related
+      operations like cloning, branching and merging must be performed through
+      this module. *)
 
   val init : Irmin.config -> unit -> Store.repo Lwt.t
-  (**Initialises the store *)
+  (** Initialises the store *)
 end
 
+(** Make creates a module of type Containers.S *)
 module Make
     (Backend : Irmin.S_MAKER)
     (M : Irmin.Metadata.S)
