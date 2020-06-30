@@ -26,7 +26,7 @@ module type S = sig
   (** Initialises the store *)
 end
 
-(** Make creates a module of type Containers.S *)
+(** [Make] creates a module of type Containers.S *)
 module Make
     (Backend : Irmin.S_MAKER)
     (M : Irmin.Metadata.S)

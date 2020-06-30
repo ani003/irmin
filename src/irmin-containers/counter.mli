@@ -15,9 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** Counter is the implementation of an int64 counter. Merge semantics is as
-    follows: if old is the value of the LCA and v1 and v2 are the current
-    values, then the merged value is v1 + v2 - old. *)
+(** [Counter] is the implementation of an int64 counter. Merge semantics is as
+    follows: if [old] is the value of the LCA and [v1] and [v2] are the current
+    values, then the merged value is [v1 + v2 - old]. *)
+
+(** Counter signature *)
 module type S = sig
   include Containers.S
   (** General store related functions *)
@@ -27,19 +29,19 @@ module type S = sig
 
   val inc :
     ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
-  (** Increment the counter by the amount specified using `by`. If no value is
-      specified, then `by` is assigned the value 1L. *)
+  (** Increment the counter by the amount specified using [by]. If no value is
+      specified, then [by] is assigned the value 1L. *)
 
   val dec :
     ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
-  (** Decrement the counter by the amount specified using `by`. If no value is
-      specified, then `by` is assigned the value 1L. *)
+  (** Decrement the counter by the amount specified using [by]. If no value is
+      specified, then [by] is assigned the value 1L. *)
 
   val read : Store.t -> path:Store.key -> value Lwt.t
   (** Read the value of the counter *)
 end
 
-(** Make returns a mergeable counter using the backend and other parameters as
+(** [Make] returns a mergeable counter using the backend and other parameters as
     specified by the user. *)
 module Make
     (Backend : Irmin.S_MAKER)
@@ -49,16 +51,16 @@ module Make
     (H : Irmin.Hash.S) :
   S with type value = int64 and type Store.key = P.t and type Store.branch = B.t
 
-(** Quick is the ready-to-use mergeable counter. *)
+(** [Quick] is the ready-to-use mergeable counter. *)
 module Quick : sig
-  (** Uses FS backend provided by Irmin_unix *)
+  (** Uses {{!Irmin_unix.FS} FS backend} provided by Irmin_unix *)
   module FS :
     S
       with type value = int64
        and type Store.key = string list
        and type Store.branch = string
 
-  (** Uses in-memory backend provided by Irmin_mem *)
+  (** Uses {{!Irmin_mem} in-memory backend} provided by Irmin_mem *)
   module Mem :
     S
       with type value = int64

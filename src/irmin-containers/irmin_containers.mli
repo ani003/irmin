@@ -17,21 +17,22 @@
 
 (** Irmin_containers public API
 
-    Irmin_containers is a collection of simple, ready-to-use mergeable data
+    [Irmin_containers] is a collection of simple, ready-to-use mergeable data
     structures. Each data structure is customisable according to the user's
     needs with regards to the type of backend being used and its accompanying
-    parameters. Along with that, Irmin_containers also provides an option to
+    parameters. Along with that, [Irmin_containers] also provides an option to
     quickly use the data structure in which suitable instantiations have been
     performed. The quick use data structures are initialised for two backends:
-    the in-memory backend provided by Irmin_mem and FS backend provided by
-    Irmin_unix. *)
+    the {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
+    {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix]. *)
 
-(** Containers module provides the general signature upon which all data
-    structures are are created. All data structures share the Containers.S
+(** [Containers] module provides the general signature upon which all data
+    structures are are created. All data structures share the {!Containers.S}
     signature and data structure specific functions are added on top of that. *)
 module Containers : sig
   module type S = sig
     include Containers.S
+    (** @inline *)
   end
 
   module Make
@@ -43,14 +44,21 @@ module Containers : sig
       (H : Irmin.Hash.S) : S with module Store = Backend(M)(C)(P)(B)(H)
 end
 
-(** Counter is the irmin implementation of the counter data structure. This
+(** {1 Data structures}*)
+
+(** {2 Counter}
+
+    [Counter] is the irmin implementation of the counter data structure. This
     module supports an int64 counter along with operations to increment,
     decrement and read the value of the counter. *)
 module Counter : sig
+  (** Counter signature *)
   module type S = sig
     include Counter.S
+    (** @inline *)
   end
 
+  (** Constructor for counter *)
   module Make
       (Backend : Irmin.S_MAKER)
       (M : Irmin.Metadata.S)
@@ -62,13 +70,16 @@ module Counter : sig
        and type Store.key = P.t
        and type Store.branch = B.t
 
+  (** Ready-to-use counter implementations *)
   module Quick : sig
+    (** Uses {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix] *)
     module FS :
       S
         with type value = int64
          and type Store.key = string list
          and type Store.branch = string
 
+    (** Uses {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] *)
     module Mem :
       S
         with type value = int64
@@ -77,23 +88,34 @@ module Counter : sig
   end
 end
 
-(** Lww_register is the implementation of the last-write-wins register. The type
-    of value to be stored in the register as well as the method to obtain
-    timestamps are provided ny the user. This module supports reading and
+(** {2 Last-write-wins register}
+
+    [Lww_register] is the implementation of the last-write-wins register. The
+    type of value to be stored in the register as well as the method to obtain
+    timestamps are provided by the user. This module supports reading and
     writing to the register. *)
 module Lww_register : sig
+  (** [Input] specifies the type of value to be stored in the register. *)
   module type Input = sig
     include Lww_register.Input
+    (** @inline *)
   end
 
+  (** [Time] specifies the method to obtain timestamps for the values to be
+      stored. It is necessary for the timestamps to be monotonic for the
+      register to function properly. *)
   module type Time = sig
     include Lww_register.Time
+    (** @inline *)
   end
 
+  (** Lww_register signature *)
   module type S = sig
     include Lww_register.S
+    (** @inline *)
   end
 
+  (** Constructor for last-write-wins register *)
   module Make
       (Backend : Irmin.S_MAKER)
       (M : Irmin.Metadata.S)
@@ -104,13 +126,18 @@ module Lww_register : sig
       (V : Input) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
+  (** Ready-to-use last-write-wins register implementations. Input must be
+      provided to specify the type of value being stored. The timestamp is
+      obtained using [Unix.gettimeofday ()] *)
   module Quick : sig
+    (** Uses {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix] *)
     module FS (V : Input) :
       S
         with type value = V.t
          and type Store.key = string list
          and type Store.branch = string
 
+    (** Uses {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] *)
     module Mem (V : Input) :
       S
         with type value = V.t
