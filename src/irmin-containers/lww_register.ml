@@ -99,15 +99,30 @@ module QuickTime : Time = struct
   let get_time () = Unix.gettimeofday ()
 end
 
-module Quick (V : Input) : sig
-  include
-    S
-      with type value = V.t
-       and type Store.key = string list
-       and type Store.branch = string
-end =
-  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-    (QuickTime)
-    (V)
+module Quick = struct
+  module FS (V : Input) : sig
+    include
+      S
+        with type value = V.t
+         and type Store.key = string list
+         and type Store.branch = string
+  end =
+    Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+      (Irmin.Branch.String)
+      (Irmin.Hash.SHA1)
+      (QuickTime)
+      (V)
+
+  module Mem (V : Input) : sig
+    include
+      S
+        with type value = V.t
+         and type Store.key = string list
+         and type Store.branch = string
+  end =
+    Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+      (Irmin.Branch.String)
+      (Irmin.Hash.SHA1)
+      (QuickTime)
+      (V)
+end

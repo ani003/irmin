@@ -78,12 +78,20 @@ module Make
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
 (** Quick is the ready-to-use mergeable last-write-wins register. Input must be
-    provided by the user to specify the type of value being stored. The register
-    is made using the FS backend from Irmin_unix and default implementaions of
-    other parameters available in Irmin. The timestamp is obtained using
-    Unix.gettimeofday *)
-module Quick (V : Input) :
-  S
-    with type value = V.t
-     and type Store.key = string list
-     and type Store.branch = string
+    provided by the user to specify the type of value being stored. The
+    timestamp is obtained using Unix.gettimeofday *)
+module Quick : sig
+  (** Uses the FS backend provided by Irmin_unix *)
+  module FS (V : Input) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+
+  (** Uses the in-memory backend provided by Irmin_mem *)
+  module Mem (V : Input) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+end

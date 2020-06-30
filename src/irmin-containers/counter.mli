@@ -49,11 +49,19 @@ module Make
     (H : Irmin.Hash.S) :
   S with type value = int64 and type Store.key = P.t and type Store.branch = B.t
 
-(** Quick is the ready-to-use mergeable counter. The counter is made using the
-    FS backend from Irmin_unix and default implementaions of other parameters
-    available in Irmin *)
-module Quick :
-  S
-    with type value = int64
-     and type Store.key = string list
-     and type Store.branch = string
+(** Quick is the ready-to-use mergeable counter. *)
+module Quick : sig
+  (** Uses FS backend provided by Irmin_unix *)
+  module FS :
+    S
+      with type value = int64
+       and type Store.key = string list
+       and type Store.branch = string
+
+  (** Uses in-memory backend provided by Irmin_mem *)
+  module Mem :
+    S
+      with type value = int64
+       and type Store.key = string list
+       and type Store.branch = string
+end

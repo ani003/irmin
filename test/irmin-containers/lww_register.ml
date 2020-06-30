@@ -8,14 +8,14 @@ module In : Irmin_containers.Lww_register.Input with type t = int = struct
   let compare = Int.compare
 end
 
-module L = Irmin_containers.Lww_register.Quick (In)
+module L = Irmin_containers.Lww_register.Quick.Mem (In)
 open L
 
 let return = Lwt.return
 
 let info = Irmin_unix.info
 
-let conf = init (Irmin_git.config "/tmp/test")
+let conf = init (Irmin_mem.config ())
 
 let path = [ "tmp"; "lww" ]
 

@@ -22,7 +22,8 @@
     needs with regards to the type of backend being used and its accompanying
     parameters. Along with that, Irmin_containers also provides an option to
     quickly use the data structure in which suitable instantiations have been
-    performed. The quick use data structures use the FS backend provided by
+    performed. The quick use data structures are initialised for two backends:
+    the in-memory backend provided by Irmin_mem and FS backend provided by
     Irmin_unix. *)
 
 (** Containers module provides the general signature upon which all data
@@ -61,11 +62,19 @@ module Counter : sig
        and type Store.key = P.t
        and type Store.branch = B.t
 
-  module Quick :
-    S
-      with type value = int64
-       and type Store.key = string list
-       and type Store.branch = string
+  module Quick : sig
+    module FS :
+      S
+        with type value = int64
+         and type Store.key = string list
+         and type Store.branch = string
+
+    module Mem :
+      S
+        with type value = int64
+         and type Store.key = string list
+         and type Store.branch = string
+  end
 end
 
 (** Lww_register is the implementation of the last-write-wins register. The type
@@ -95,9 +104,17 @@ module Lww_register : sig
       (V : Input) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
-  module Quick (V : Input) :
-    S
-      with type value = V.t
-       and type Store.key = string list
-       and type Store.branch = string
+  module Quick : sig
+    module FS (V : Input) :
+      S
+        with type value = V.t
+         and type Store.key = string list
+         and type Store.branch = string
+
+    module Mem (V : Input) :
+      S
+        with type value = V.t
+         and type Store.key = string list
+         and type Store.branch = string
+  end
 end

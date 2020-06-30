@@ -1,12 +1,12 @@
 open Lwt.Infix
-module C = Irmin_containers.Counter.Quick
+module C = Irmin_containers.Counter.Quick.Mem
 open C
 
 let return = Lwt.return
 
 let info = Irmin_unix.info
 
-let conf = init (Irmin_git.config "/tmp/test")
+let conf = init (Irmin_mem.config ())
 
 let path = [ "tmp"; "cnt" ]
 
