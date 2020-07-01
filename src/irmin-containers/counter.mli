@@ -21,8 +21,9 @@
 
 (** Counter signature *)
 module type S = sig
-  include Containers.S
-  (** General store related functions *)
+  module Store : Irmin.S
+  (** Content store of counter. All store related operations like branching,
+      cloning, merging, etc are done through this module. *)
 
   type value
   (** Type of value as seen by the user *)

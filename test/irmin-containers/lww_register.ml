@@ -15,7 +15,7 @@ let return = Lwt.return
 
 let info = Irmin_unix.info
 
-let conf = init (Irmin_mem.config ())
+let conf () = Store.Repo.v (Irmin_mem.config ())
 
 let path = [ "tmp"; "lww" ]
 

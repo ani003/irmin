@@ -28,7 +28,7 @@ module Counter : Irmin.Contents.S with type t = int64 = struct
 end
 
 module type S = sig
-  include Containers.S
+  module Store : Irmin.S
 
   type value
 
@@ -53,8 +53,7 @@ module Make
        and type Store.key = P.t
        and type Store.branch = B.t
 end = struct
-  module Repo = Containers.Make (Backend) (M) (Counter) (P) (B) (H)
-  include Repo
+  module Store = Backend (M) (Counter) (P) (B) (H)
 
   type value = Counter.t
 
@@ -74,24 +73,11 @@ end = struct
 end
 
 module Quick = struct
-  module FS : sig
-    include
-      S
-        with type value = int64
-         and type Store.key = string list
-         and type Store.branch = string
-  end =
+  module FS =
     Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)
-
-  module Mem : sig
-    include
-      S
-        with type value = int64
-         and type Store.key = string list
-         and type Store.branch = string
-  end =
+  module Mem =
     Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)

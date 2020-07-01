@@ -53,7 +53,7 @@ struct
 end
 
 module type S = sig
-  include Containers.S
+  module Store : Irmin.S
 
   type value
 
@@ -74,8 +74,7 @@ module Make
   include
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 end = struct
-  module Repo = Containers.Make (Backend) (M) (LWW (T) (V)) (P) (B) (H)
-  include Repo
+  module Store = Backend (M) (LWW (T) (V)) (P) (B) (H)
 
   type value = V.t
 
@@ -100,26 +99,13 @@ module QuickTime : Time = struct
 end
 
 module Quick = struct
-  module FS (V : Input) : sig
-    include
-      S
-        with type value = V.t
-         and type Store.key = string list
-         and type Store.branch = string
-  end =
+  module FS (V : Input) =
     Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)
       (QuickTime)
       (V)
-
-  module Mem (V : Input) : sig
-    include
-      S
-        with type value = V.t
-         and type Store.key = string list
-         and type Store.branch = string
-  end =
+  module Mem (V : Input) =
     Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)

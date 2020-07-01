@@ -26,24 +26,6 @@
     the {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
     {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix]. *)
 
-(** [Containers] module provides the general signature upon which all data
-    structures are are created. All data structures share the {!Containers.S}
-    signature and data structure specific functions are added on top of that. *)
-module Containers : sig
-  module type S = sig
-    include Containers.S
-    (** @inline *)
-  end
-
-  module Make
-      (Backend : Irmin.S_MAKER)
-      (M : Irmin.Metadata.S)
-      (C : Irmin.Contents.S)
-      (P : Irmin.Path.S)
-      (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S) : S with module Store = Backend(M)(C)(P)(B)(H)
-end
-
 (** {1 Data structures}*)
 
 (** {2 Counter}

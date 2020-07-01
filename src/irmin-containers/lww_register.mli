@@ -51,8 +51,9 @@ end
 
 (** Signature of [Lww_register] *)
 module type S = sig
-  include Containers.S
-  (** General store related functions. *)
+  module Store : Irmin.S
+  (** Content store of the register. All store related operations like
+      branching, cloning, merging, etc are done through this module. *)
 
   type value
   (** Type of value stored in the register *)
