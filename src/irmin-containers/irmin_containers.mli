@@ -132,3 +132,44 @@ module Lww_register : sig
        and type Store.key = string list
        and type Store.branch = string
 end
+
+(** {2 Blob log}
+
+    [Blob_log] is the implementation of log in which two copies do not share
+    their common predecessor. Each copy is maintained as a separate log. The
+    blob log supports appending an entry into the log and reading the entire
+    log. *)
+module Blob_log : sig
+  (** Signature of the blob log *)
+  module type S = sig
+    include Blob_log.S
+    (** @inline *)
+  end
+
+  (** Constructor for blob log *)
+  module Make
+      (Backend : Irmin.S_MAKER)
+      (M : Irmin.Metadata.S)
+      (P : Irmin.Path.S)
+      (B : Irmin.Branch.S)
+      (H : Irmin.Hash.S)
+      (T : Time.S)
+      (V : Irmin.Type.S) :
+    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+
+  (** Blob log instantiated using {{!Irmin_unix.FS} FS backend} provided by
+      [Irmin_unix] and the timestamp method {!Time.Unix} *)
+  module FS (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+
+  (** Blob log instantiated using {{!Irmin_mem} in-memory backend} provided by
+      [Irmin_mem] and the timestamp method {!Time.Unix} *)
+  module Mem (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+end

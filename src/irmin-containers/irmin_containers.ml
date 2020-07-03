@@ -18,3 +18,4 @@
 module Time = Time
 module Counter = Counter
 module Lww_register = Lww_register
+module Blob_log = Blob_log
