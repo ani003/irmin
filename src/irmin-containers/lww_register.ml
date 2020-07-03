@@ -25,17 +25,7 @@ module type Input = sig
   val compare : t -> t -> int
 end
 
-module type Time = sig
-  type t
-
-  val t : t Irmin.Type.t
-
-  val compare : t -> t -> int
-
-  val get_time : unit -> t
-end
-
-module LWW (T : Time) (V : Input) : Irmin.Contents.S with type t = V.t * T.t =
+module LWW (T : Time.S) (V : Input) : Irmin.Contents.S with type t = V.t * T.t =
 struct
   type t = V.t * T.t
 
@@ -69,7 +59,7 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
-    (T : Time)
+    (T : Time.S)
     (V : Input) : sig
   include
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
@@ -88,27 +78,17 @@ end = struct
     Store.set_exn ~info t path (v, timestamp)
 end
 
-module QuickTime : Time = struct
-  type t = float
-
-  let t = Irmin.Type.float
-
-  let compare = Float.compare
-
-  let get_time () = Unix.gettimeofday ()
-end
-
 module Quick = struct
   module FS (V : Input) =
     Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)
-      (QuickTime)
+      (Time.Unix)
       (V)
   module Mem (V : Input) =
     Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
       (Irmin.Branch.String)
       (Irmin.Hash.SHA1)
-      (QuickTime)
+      (Time.Unix)
       (V)
 end

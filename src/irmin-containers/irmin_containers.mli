@@ -26,6 +26,25 @@
     the {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
     {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix]. *)
 
+(** {1 Auxiliary modules}  *)
+
+(** {2 Time}
+ 
+    [Time] specifies the method to obtain timestamps for the values to be
+    stored. It is necessary for the timestamps to be monotonic for the data structures
+    to function properly.
+*)
+module Time : sig
+  (** Signature for [Time] *)
+  module type S = sig
+    include Time.S
+    (** @inline *)
+  end
+
+  (** A timestamp method using [Unix.gettimeofday] *)
+  module Unix : S
+end
+
 (** {1 Data structures}*)
 
 (** {2 Counter}
@@ -83,14 +102,6 @@ module Lww_register : sig
     (** @inline *)
   end
 
-  (** [Time] specifies the method to obtain timestamps for the values to be
-      stored. It is necessary for the timestamps to be monotonic for the
-      register to function properly. *)
-  module type Time = sig
-    include Lww_register.Time
-    (** @inline *)
-  end
-
   (** Lww_register signature *)
   module type S = sig
     include Lww_register.S
@@ -104,7 +115,7 @@ module Lww_register : sig
       (P : Irmin.Path.S)
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S)
-      (T : Time)
+      (T : Time.S)
       (V : Input) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 

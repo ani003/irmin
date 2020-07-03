@@ -31,24 +31,6 @@ module type Input = sig
       ties while merging *)
 end
 
-(** [Time] specifies the method to obtain timestamps for the values to be
-    stored. It is necessary for the timestamps to be monotonic for the register
-    to function properly. *)
-module type Time = sig
-  type t
-  (** Type of the timestamp *)
-
-  val t : t Irmin.Type.t
-  (** Corresponding irmin type of the timestamp *)
-
-  val compare : t -> t -> int
-  (** Comparator for the timestamps. Used to decide the last entry to the
-      register.*)
-
-  val get_time : unit -> t
-  (** Returns a timestamp *)
-end
-
 (** Signature of [Lww_register] *)
 module type S = sig
   module Store : Irmin.S
@@ -74,13 +56,13 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
-    (T : Time)
+    (T : Time.S)
     (V : Input) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
 (** [Quick] is the ready-to-use mergeable last-write-wins register. Input must
     be provided by the user to specify the type of value being stored. The
-    timestamp is obtained using [Unix.gettimeofday ()] *)
+    timestamp method used is {!Time.Unix} *)
 module Quick : sig
   (** Uses {{!Irmin_unix.FS} FS backend} provided by Irmin_unix *)
   module FS (V : Input) :

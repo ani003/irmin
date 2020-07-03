@@ -15,6 +15,25 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-module Time = Time
-module Counter = Counter
-module Lww_register = Lww_register
+(** [Time] specifies the method to obtain timestamps for the values to be
+    stored. It is necessary for the timestamps to be monotonic for the data structures
+    to function properly. *)
+
+(** Signature for the timestamps *)
+module type S = sig
+  type t
+  (** Type of the timestamp *)
+
+  val t : t Irmin.Type.t
+  (** Corresponding irmin type of the timestamp *)
+
+  val compare : t -> t -> int
+  (** Comparator for the timestamps. Used to decide the last entry to the
+      register.*)
+
+  val get_time : unit -> t
+  (** Returns a timestamp *)
+end
+
+(** A timestamp method using [Unix.gettimeofday] *)
+module Unix : S
