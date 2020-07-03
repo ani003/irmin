@@ -20,20 +20,18 @@
     [Irmin_containers] is a collection of simple, ready-to-use mergeable data
     structures. Each data structure is customisable according to the user's
     needs with regards to the type of backend being used and its accompanying
-    parameters. Along with that, [Irmin_containers] also provides an option to
-    quickly use the data structure in which suitable instantiations have been
-    performed. The quick use data structures are initialised for two backends:
-    the {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
+    parameters. Along with that, [Irmin_containers] also provides data
+    structures with suitable instantiations performed using two backends: the
+    {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
     {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix]. *)
 
-(** {1 Auxiliary modules}  *)
+(** {1 Auxiliary modules} *)
 
 (** {2 Time}
- 
+
     [Time] specifies the method to obtain timestamps for the values to be
-    stored. It is necessary for the timestamps to be monotonic for the data structures
-    to function properly.
-*)
+    stored. It is necessary for the timestamps to be monotonic for the data
+    structures to function properly. *)
 module Time : sig
   (** Signature for [Time] *)
   module type S = sig
@@ -41,8 +39,8 @@ module Time : sig
     (** @inline *)
   end
 
-  (** A timestamp method using [Unix.gettimeofday] *)
   module Unix : S
+  (** A timestamp method using [Unix.gettimeofday] *)
 end
 
 (** {1 Data structures}*)
@@ -71,22 +69,21 @@ module Counter : sig
        and type Store.key = P.t
        and type Store.branch = B.t
 
-  (** Ready-to-use counter implementations *)
-  module Quick : sig
-    (** Uses {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix] *)
-    module FS :
-      S
-        with type value = int64
-         and type Store.key = string list
-         and type Store.branch = string
+  (** Counter instantiated using {{!Irmin_unix.FS} FS backend} provided by
+      [Irmin_unix] *)
+  module FS :
+    S
+      with type value = int64
+       and type Store.key = string list
+       and type Store.branch = string
 
-    (** Uses {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] *)
-    module Mem :
-      S
-        with type value = int64
-         and type Store.key = string list
-         and type Store.branch = string
-  end
+  (** Counter instantiated using {{!Irmin_mem} in-memory backend} provided by
+      [Irmin_mem] *)
+  module Mem :
+    S
+      with type value = int64
+       and type Store.key = string list
+       and type Store.branch = string
 end
 
 (** {2 Last-write-wins register}
@@ -119,22 +116,19 @@ module Lww_register : sig
       (V : Input) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
-  (** Ready-to-use last-write-wins register implementations. Input must be
-      provided to specify the type of value being stored. The timestamp is
-      obtained using [Unix.gettimeofday ()] *)
-  module Quick : sig
-    (** Uses {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix] *)
-    module FS (V : Input) :
-      S
-        with type value = V.t
-         and type Store.key = string list
-         and type Store.branch = string
+  (** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
+      [Irmin_unix] and the timestamp method {!Time.Unix} *)
+  module FS (V : Input) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
 
-    (** Uses {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] *)
-    module Mem (V : Input) :
-      S
-        with type value = V.t
-         and type Store.key = string list
-         and type Store.branch = string
-  end
+  (** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided
+      by [Irmin_mem] and the timestamp method {!Time.Unix} *)
+  module Mem (V : Input) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
 end

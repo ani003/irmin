@@ -60,21 +60,18 @@ module Make
     (V : Input) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
-(** [Quick] is the ready-to-use mergeable last-write-wins register. Input must
-    be provided by the user to specify the type of value being stored. The
-    timestamp method used is {!Time.Unix} *)
-module Quick : sig
-  (** Uses {{!Irmin_unix.FS} FS backend} provided by Irmin_unix *)
-  module FS (V : Input) :
-    S
-      with type value = V.t
-       and type Store.key = string list
-       and type Store.branch = string
+(** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
+    [Irmin_unix] and the timestamp method {!Time.Unix} *)
+module FS (V : Input) :
+  S
+    with type value = V.t
+     and type Store.key = string list
+     and type Store.branch = string
 
-  (** Uses {{!Irmin_mem} in-memory backend} provided by Irmin_mem *)
-  module Mem (V : Input) :
-    S
-      with type value = V.t
-       and type Store.key = string list
-       and type Store.branch = string
-end
+(** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided by
+    [Irmin_mem] and the timestamp method {!Time.Unix} *)
+module Mem (V : Input) :
+  S
+    with type value = V.t
+     and type Store.key = string list
+     and type Store.branch = string

@@ -78,17 +78,15 @@ end = struct
     Store.set_exn ~info t path (v, timestamp)
 end
 
-module Quick = struct
-  module FS (V : Input) =
-    Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-      (Irmin.Branch.String)
-      (Irmin.Hash.SHA1)
-      (Time.Unix)
-      (V)
-  module Mem (V : Input) =
-    Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-      (Irmin.Branch.String)
-      (Irmin.Hash.SHA1)
-      (Time.Unix)
-      (V)
-end
+module FS (V : Input) =
+  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+    (Irmin.Branch.String)
+    (Irmin.Hash.SHA1)
+    (Time.Unix)
+    (V)
+module Mem (V : Input) =
+  Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+    (Irmin.Branch.String)
+    (Irmin.Hash.SHA1)
+    (Time.Unix)
+    (V)

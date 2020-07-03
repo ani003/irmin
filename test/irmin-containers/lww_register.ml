@@ -8,7 +8,7 @@ module In : Irmin_containers.Lww_register.Input with type t = int = struct
   let compare = Int.compare
 end
 
-module L = Irmin_containers.Lww_register.Quick.Mem (In)
+module L = Irmin_containers.Lww_register.Mem (In)
 open L
 
 let return = Lwt.return

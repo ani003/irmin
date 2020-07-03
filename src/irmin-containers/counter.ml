@@ -72,13 +72,11 @@ end = struct
     Store.find t path >>= function None -> return 0L | Some v -> return v
 end
 
-module Quick = struct
-  module FS =
-    Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-      (Irmin.Branch.String)
-      (Irmin.Hash.SHA1)
-  module Mem =
-    Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-      (Irmin.Branch.String)
-      (Irmin.Hash.SHA1)
-end
+module FS =
+  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+    (Irmin.Branch.String)
+    (Irmin.Hash.SHA1)
+module Mem =
+  Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
+    (Irmin.Branch.String)
+    (Irmin.Hash.SHA1)

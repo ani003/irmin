@@ -16,8 +16,8 @@
  *)
 
 (** [Time] specifies the method to obtain timestamps for the values to be
-    stored. It is necessary for the timestamps to be monotonic for the data structures
-    to function properly. *)
+    stored. It is necessary for the timestamps to be monotonic for the data
+    structures to function properly. *)
 
 (** Signature for the timestamps *)
 module type S = sig
@@ -35,5 +35,5 @@ module type S = sig
   (** Returns a timestamp *)
 end
 
-(** A timestamp method using [Unix.gettimeofday] *)
 module Unix : S
+(** A timestamp method using [Unix.gettimeofday] *)

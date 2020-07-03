@@ -1,5 +1,5 @@
 open Lwt.Infix
-module C = Irmin_containers.Counter.Quick.Mem
+module C = Irmin_containers.Counter.Mem
 open C
 
 let return = Lwt.return
