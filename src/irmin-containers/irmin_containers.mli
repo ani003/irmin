@@ -43,6 +43,21 @@ module Time : sig
   (** A timestamp method using [Unix.gettimeofday] *)
 end
 
+(** {2 Cas_maker}
+
+    [Cas_maker] is the content addressable store maker required by some of the
+    data structures. *)
+module Cas_maker : sig
+  (** [Cas_maker] Signature *)
+  module type S = sig
+    include Cas_maker.S
+    (** @inline *)
+  end
+
+  module Mem : S
+  (** A CAS maker implementation using {!Irmin_mem} *)
+end
+
 (** {1 Data structures}*)
 
 (** {2 Counter}

@@ -15,8 +15,17 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-module Time = Time
-module Cas_maker = Cas_maker
-module Counter = Counter
-module Lww_register = Lww_register
-module Blob_log = Blob_log
+(** [Cas_maker] is the content addressable store maker required by some of the
+    data structures. *)
+
+(** [Cas_maker] Signature *)
+module type S = sig
+  module CAS_Maker : Irmin.CONTENT_ADDRESSABLE_STORE_MAKER
+  (** Constructor for a content addressable store *)
+
+  val config : Irmin.config
+  (** Configuration for the content addressable store *)
+end
+
+module Mem : S
+(** A CAS maker implementation using {!Irmin_mem} *)

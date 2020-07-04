@@ -15,8 +15,14 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-module Time = Time
-module Cas_maker = Cas_maker
-module Counter = Counter
-module Lww_register = Lww_register
-module Blob_log = Blob_log
+module type S = sig
+  module CAS_Maker : Irmin.CONTENT_ADDRESSABLE_STORE_MAKER
+
+  val config : Irmin.config
+end
+
+module Mem : S = struct
+  module CAS_Maker = Irmin.Content_addressable (Irmin_mem.Append_only)
+
+  let config = Irmin_mem.config ()
+end
