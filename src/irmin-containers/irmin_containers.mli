@@ -188,3 +188,49 @@ module Blob_log : sig
        and type Store.key = string list
        and type Store.branch = string
 end
+
+(** {2 Log}
+
+    [Log] is the implementation of log in which two copies share their common
+    predecessor. The log supports appending an entry into the log, getting a
+    cursor, reading a certain number of elements from the cursor and reading the
+    entire log. A content addressable store, timestamp and a hash and type of
+    log entries are required. *)
+module Log : sig
+  (** Log signature *)
+  module type S = sig
+    include Log.S
+    (** @inline *)
+  end
+
+  (** Constructor for log *)
+  module Make
+      (Backend : Irmin.S_MAKER)
+      (M : Irmin.Metadata.S)
+      (P : Irmin.Path.S)
+      (B : Irmin.Branch.S)
+      (H : Irmin.Hash.S)
+      (C : Cas_maker.S)
+      (T : Time.S)
+      (K : Irmin.Hash.S)
+      (V : Irmin.Type.S) :
+    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+
+  (** Log instantiated using {{!Irmin_unix.FS} FS backend} provided by
+      [Irmin_unix], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
+      CAS maker {!Cas_maker.Mem} *)
+  module FS (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+
+  (** Log instantiated using {{!Irmin_mem} in-memory backend} provided by
+      [Irmin_mem], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
+      CAS maker {!Cas_maker.Mem} *)
+  module Mem (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.key = string list
+       and type Store.branch = string
+end
