@@ -20,4 +20,4 @@ module Cas_maker = Cas_maker
 module Counter = Counter
 module Lww_register = Lww_register
 module Blob_log = Blob_log
-module Log = Log
+module Linked_log = Linked_log

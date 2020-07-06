@@ -15,12 +15,12 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** [Log] is the implementation of the log in which two copies of the log share
-    their common predecessor. The type of the log entries, the method to obtain
-    timestamp, a hashing method and a content addressable store maker are
-    provided by the user. *)
+(** [Linked_log] is a linked list implementation of the log. In this, two copies
+    of the log share their common predecessor. The type of the log entries, the
+    method to obtain timestamp, a hashing method and a content addressable store
+    maker are provided by the user. *)
 
-(** Signature of [Log] *)
+(** Signature of [Linked_log] *)
 module type S = sig
   module Store : Irmin.S
   (** Store for the log. All store related operations like branching, cloning,
@@ -50,8 +50,8 @@ module type S = sig
   (** Read the entire log *)
 end
 
-(** [Make] returns a mergeable log using the backend and other parameters as
-    specified by the user. *)
+(** [Make] returns a mergeable linked log using the backend and other parameters
+    as specified by the user. *)
 module Make
     (Backend : Irmin.S_MAKER)
     (M : Irmin.Metadata.S)
@@ -64,7 +64,7 @@ module Make
     (V : Irmin.Type.S) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
-(** Log instantiated using {{!Irmin_unix.FS} FS backend} provided by
+(** Linked log instantiated using {{!Irmin_unix.FS} FS backend} provided by
     [Irmin_unix], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and CAS
     maker {!Cas_maker.Mem} *)
 module FS (V : Irmin.Type.S) :
@@ -73,7 +73,7 @@ module FS (V : Irmin.Type.S) :
      and type Store.key = string list
      and type Store.branch = string
 
-(** Log instantiated using {{!Irmin_mem} in-memory backend} provided by
+(** Linked log instantiated using {{!Irmin_mem} in-memory backend} provided by
     [Irmin_mem], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and CAS
     maker {!Cas_maker.Mem} *)
 module Mem (V : Irmin.Type.S) :

@@ -19,4 +19,4 @@ open Lwt.Infix
 
 let _ =
   Lwt_main.run
-    (Counter.test () >>= Lww_register.test >>= Blob_log.test >>= Log.test)
+    (Counter.test () >>= Lww_register.test >>= Blob_log.test >>= Linked_log.test)

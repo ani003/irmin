@@ -81,7 +81,11 @@ struct
   let sort l = List.sort (fun i1 i2 -> T.compare i2.time i1.time) l
 end
 
-module Log (C : Cas_maker.S) (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) =
+module Linked_log
+    (C : Cas_maker.S)
+    (T : Time.S)
+    (K : Irmin.Hash.S)
+    (V : Irmin.Type.S) =
 struct
   type t = K.t
 
@@ -142,7 +146,7 @@ module Make
   include
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 end = struct
-  module L = Log (C) (T) (K) (V)
+  module L = Linked_log (C) (T) (K) (V)
   module Store = Backend (M) (L) (P) (B) (H)
 
   module Set_elt = struct

@@ -23,7 +23,7 @@ module String = struct
   let t = Irmin.Type.string
 end
 
-module M = Irmin_containers.Log.Mem (String)
+module M = Irmin_containers.Linked_log.Mem (String)
 open M
 
 let return = Lwt.return
