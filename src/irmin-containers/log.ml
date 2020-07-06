@@ -89,7 +89,7 @@ struct
 
   include Log_ops (C) (T) (K) (V)
 
-  let merge ~old v1 v2 =
+  let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
     Store.get_store () >>= fun store ->
     Store.find store v1 >>= fun v1 ->
