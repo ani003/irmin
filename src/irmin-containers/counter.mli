@@ -25,20 +25,17 @@ module type S = sig
   (** Content store of counter. All store related operations like branching,
       cloning, merging, etc are done through this module. *)
 
-  type value
-  (** Type of value as seen by the user *)
-
   val inc :
-    ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
   (** Increment the counter by the amount specified using [by]. If no value is
       specified, then [by] is assigned the value 1L. *)
 
   val dec :
-    ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
   (** Decrement the counter by the amount specified using [by]. If no value is
       specified, then [by] is assigned the value 1L. *)
 
-  val read : Store.t -> path:Store.key -> value Lwt.t
+  val read : Store.t -> path:Store.key -> int64 Lwt.t
   (** Read the value of the counter *)
 end
 
@@ -49,21 +46,12 @@ module Make
     (M : Irmin.Metadata.S)
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S) :
-  S with type value = int64 and type Store.key = P.t and type Store.branch = B.t
+    (H : Irmin.Hash.S) : S with type Store.key = P.t and type Store.branch = B.t
 
 (** Counter instantiated using {{!Irmin_unix.FS} FS backend} provided by
     [Irmin_unix] *)
-module FS :
-  S
-    with type value = int64
-     and type Store.key = string list
-     and type Store.branch = string
+module FS : S with type Store.key = string list and type Store.branch = string
 
 (** Counter instantiated using {{!Irmin_mem} in-memory backend} provided by
     [Irmin_mem] *)
-module Mem :
-  S
-    with type value = int64
-     and type Store.key = string list
-     and type Store.branch = string
+module Mem : S with type Store.key = string list and type Store.branch = string

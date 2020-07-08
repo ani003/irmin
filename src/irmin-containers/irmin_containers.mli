@@ -79,26 +79,16 @@ module Counter : sig
       (P : Irmin.Path.S)
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S) :
-    S
-      with type value = int64
-       and type Store.key = P.t
-       and type Store.branch = B.t
+    S with type Store.key = P.t and type Store.branch = B.t
 
   (** Counter instantiated using {{!Irmin_unix.FS} FS backend} provided by
       [Irmin_unix] *)
-  module FS :
-    S
-      with type value = int64
-       and type Store.key = string list
-       and type Store.branch = string
+  module FS : S with type Store.key = string list and type Store.branch = string
 
   (** Counter instantiated using {{!Irmin_mem} in-memory backend} provided by
       [Irmin_mem] *)
   module Mem :
-    S
-      with type value = int64
-       and type Store.key = string list
-       and type Store.branch = string
+    S with type Store.key = string list and type Store.branch = string
 end
 
 (** {2 Last-write-wins register}

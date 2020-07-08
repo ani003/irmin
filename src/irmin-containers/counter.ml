@@ -30,15 +30,13 @@ end
 module type S = sig
   module Store : Irmin.S
 
-  type value
-
   val inc :
-    ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
 
   val dec :
-    ?by:value -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
 
-  val read : Store.t -> path:Store.key -> value Lwt.t
+  val read : Store.t -> path:Store.key -> int64 Lwt.t
 end
 
 module Make
@@ -47,11 +45,7 @@ module Make
     (P : Irmin.Path.S)
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S) : sig
-  include
-    S
-      with type value = int64
-       and type Store.key = P.t
-       and type Store.branch = B.t
+  include S with type Store.key = P.t and type Store.branch = B.t
 end = struct
   module Store = Backend (M) (Counter) (P) (B) (H)
 
