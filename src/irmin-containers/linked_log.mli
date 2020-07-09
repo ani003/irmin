@@ -34,19 +34,19 @@ module type S = sig
       entries can be read *)
 
   val append :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
   (** Append an entry to the log *)
 
-  val get_cursor : Store.t -> path:Store.key -> cursor option Lwt.t
+  val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t
   (** Get the cursor *)
 
-  val read : cursor -> num_items:int -> (value list * cursor option) Lwt.t
+  val read : num_items:int -> cursor -> (value list * cursor option) Lwt.t
   (** Read a certain number of entries starting from the cursor. If the number
       specified is greater than the number of log entires from the cursor, the
       log is read till the end. If the input cursor has already reached the end,
       then an empty list is returned *)
 
-  val read_all : Store.t -> path:Store.key -> value list Lwt.t
+  val read_all : path:Store.key -> Store.t -> value list Lwt.t
   (** Read the entire log *)
 end
 

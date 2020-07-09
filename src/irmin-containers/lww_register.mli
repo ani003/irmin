@@ -40,11 +40,11 @@ module type S = sig
   type value
   (** Type of value stored in the register *)
 
-  val read : Store.t -> path:Store.key -> value option Lwt.t
+  val read : path:Store.key -> Store.t -> value option Lwt.t
   (** Reads the value from the register. Returns None if no value is written *)
 
   val write :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
   (** Writes the provided value to the register *)
 end
 

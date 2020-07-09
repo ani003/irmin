@@ -31,12 +31,12 @@ module type S = sig
   module Store : Irmin.S
 
   val inc :
-    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
 
   val dec :
-    ?by:int64 -> info:Irmin.Info.f -> Store.t -> path:Store.key -> unit Lwt.t
+    ?by:int64 -> info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
 
-  val read : Store.t -> path:Store.key -> int64 Lwt.t
+  val read : path:Store.key -> Store.t -> int64 Lwt.t
 end
 
 module Make
@@ -56,13 +56,13 @@ end = struct
     | None -> Store.set_exn ~info t path (fn 0L by)
     | Some v -> Store.set_exn ~info t path (fn v by)
 
-  let inc ?(by = 1L) ~info t ~path =
+  let inc ?(by = 1L) ~info ~path t =
     modify by info t path (fun x by -> Int64.add x by)
 
-  let dec ?(by = 1L) ~info t ~path =
+  let dec ?(by = 1L) ~info ~path t =
     modify by info t path (fun x by -> Int64.sub x by)
 
-  let read t ~path =
+  let read ~path t =
     Store.find t path >>= function None -> return 0L | Some v -> return v
 end
 

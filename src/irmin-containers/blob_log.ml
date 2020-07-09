@@ -57,9 +57,9 @@ module type S = sig
   type value
 
   val append :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
 
-  val read_all : Store.t -> path:Store.key -> value list Lwt.t
+  val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
 
 module Make
@@ -79,12 +79,12 @@ end = struct
 
   let create_entry v = (v, T.get_time ())
 
-  let append ~info t ~path v =
+  let append ~info ~path t v =
     Store.find t path >>= function
     | None -> Store.set_exn ~info t path [ create_entry v ]
     | Some l -> Store.set_exn ~info t path (create_entry v :: l)
 
-  let read_all t ~path =
+  let read_all ~path t =
     Store.find t path >>= function
     | None -> return []
     | Some l -> return (List.map (fun (v, _) -> v) l)

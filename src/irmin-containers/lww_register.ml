@@ -47,10 +47,10 @@ module type S = sig
 
   type value
 
-  val read : Store.t -> path:Store.key -> value option Lwt.t
+  val read : path:Store.key -> Store.t -> value option Lwt.t
 
   val write :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
 end
 
 module Make
@@ -68,12 +68,12 @@ end = struct
 
   type value = V.t
 
-  let read t ~path =
+  let read ~path t =
     Store.find t path >>= function
     | None -> return None
     | Some (v, _) -> return (Some v)
 
-  let write ~info t ~path v =
+  let write ~info ~path t v =
     let timestamp = T.get_time () in
     Store.set_exn ~info t path (v, timestamp)
 end

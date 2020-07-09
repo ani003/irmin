@@ -124,13 +124,13 @@ module type S = sig
   type cursor
 
   val append :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
 
-  val get_cursor : Store.t -> path:Store.key -> cursor option Lwt.t
+  val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t
 
-  val read : cursor -> num_items:int -> (value list * cursor option) Lwt.t
+  val read : num_items:int -> cursor -> (value list * cursor option) Lwt.t
 
-  val read_all : Store.t -> path:Store.key -> value list Lwt.t
+  val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
 
 module Make
@@ -165,11 +165,11 @@ end = struct
     store : Store.t;
   }
 
-  let append ~info t ~path e =
+  let append ~info ~path t e =
     Store.find t path >>= fun prev ->
     L.append prev e >>= fun v -> Store.set_exn ~info t path v
 
-  let get_cursor store ~path =
+  let get_cursor ~path store =
     let mk_cursor k cache =
       return @@ Some { seen = HashSet.singleton k; cache; store }
     in
@@ -203,9 +203,9 @@ end = struct
                   { cursor with seen; cache = sort (l @ xs) }
                   (num_items - 1) (msg :: acc) )
 
-  let read cursor ~num_items = read_log cursor num_items []
+  let read ~num_items cursor = read_log cursor num_items []
 
-  let read_all t ~path =
+  let read_all ~path t =
     get_cursor t ~path >>= function
     | None -> return []
     | Some cursor ->

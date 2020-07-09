@@ -31,10 +31,10 @@ module type S = sig
   (** Type of log entry *)
 
   val append :
-    info:Irmin.Info.f -> Store.t -> path:Store.key -> value -> unit Lwt.t
+    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
   (** Append an entry to the log *)
 
-  val read_all : Store.t -> path:Store.key -> value list Lwt.t
+  val read_all : path:Store.key -> Store.t -> value list Lwt.t
   (** Read the entire log *)
 end
 
