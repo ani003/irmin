@@ -19,6 +19,8 @@ open Lwt.Infix
 
 let return = Lwt.return
 
+let empty_info = Irmin.Info.none
+
 module Counter : Irmin.Contents.S with type t = int64 = struct
   type t = int64
 
@@ -31,10 +33,10 @@ module type S = sig
   module Store : Irmin.S
 
   val inc :
-    ?by:int64 -> info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
+    ?by:int64 -> ?info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
 
   val dec :
-    ?by:int64 -> info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
+    ?by:int64 -> ?info:Irmin.Info.f -> path:Store.key -> Store.t -> unit Lwt.t
 
   val read : path:Store.key -> Store.t -> int64 Lwt.t
 end
@@ -56,10 +58,10 @@ end = struct
     | None -> Store.set_exn ~info t path (fn 0L by)
     | Some v -> Store.set_exn ~info t path (fn v by)
 
-  let inc ?(by = 1L) ~info ~path t =
+  let inc ?(by = 1L) ?(info = empty_info) ~path t =
     modify by info t path (fun x by -> Int64.add x by)
 
-  let dec ?(by = 1L) ~info ~path t =
+  let dec ?(by = 1L) ?(info = empty_info) ~path t =
     modify by info t path (fun x by -> Int64.sub x by)
 
   let read ~path t =

@@ -19,6 +19,8 @@ open Lwt.Infix
 
 let return = Lwt.return
 
+let empty_info = Irmin.Info.none
+
 module Blob_log (T : Time.S) (V : Irmin.Type.S) :
   Irmin.Contents.S with type t = (V.t * T.t) list = struct
   type t = (V.t * T.t) list
@@ -56,8 +58,7 @@ module type S = sig
 
   type value
 
-  val append :
-    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
+  val append : path:Store.key -> Store.t -> value -> unit Lwt.t
 
   val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
@@ -79,10 +80,10 @@ end = struct
 
   let create_entry v = (v, T.get_time ())
 
-  let append ~info ~path t v =
+  let append ~path t v =
     Store.find t path >>= function
-    | None -> Store.set_exn ~info t path [ create_entry v ]
-    | Some l -> Store.set_exn ~info t path (create_entry v :: l)
+    | None -> Store.set_exn empty_info t path [ create_entry v ]
+    | Some l -> Store.set_exn empty_info t path (create_entry v :: l)
 
   let read_all ~path t =
     Store.find t path >>= function

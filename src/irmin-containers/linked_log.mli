@@ -33,8 +33,7 @@ module type S = sig
   (** Type of cursor. Cursor is like a marker from which a certain number of
       entries can be read *)
 
-  val append :
-    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
+  val append : path:Store.key -> Store.t -> value -> unit Lwt.t
   (** Append an entry to the log *)
 
   val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t

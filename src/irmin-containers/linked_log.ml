@@ -19,6 +19,8 @@ open Lwt.Infix
 
 let return = Lwt.return
 
+let empty_info = Irmin.Info.none
+
 type ('a, 'b, 'c) log_item = { time : 'a; msg : 'b; prev : 'c option }
 
 module Log_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) :
@@ -123,8 +125,7 @@ module type S = sig
 
   type cursor
 
-  val append :
-    info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
+  val append : path:Store.key -> Store.t -> value -> unit Lwt.t
 
   val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t
 
@@ -165,9 +166,9 @@ end = struct
     store : Store.t;
   }
 
-  let append ~info ~path t e =
+  let append ~path t e =
     Store.find t path >>= fun prev ->
-    L.append prev e >>= fun v -> Store.set_exn ~info t path v
+    L.append prev e >>= fun v -> Store.set_exn empty_info t path v
 
   let get_cursor ~path store =
     let mk_cursor k cache =
