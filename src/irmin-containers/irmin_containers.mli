@@ -203,7 +203,7 @@ module Linked_log : sig
   (** Linked log instantiated using {{!Irmin_unix.FS} FS backend} provided by
       [Irmin_unix], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
       CAS maker {!Cas_maker.Mem} *)
-  module FS (V : Irmin.Type.S) :
+  module FS (C : Cas_maker.S) (V : Irmin.Type.S) :
     S
       with type value = V.t
        and type Store.key = string list
@@ -212,7 +212,7 @@ module Linked_log : sig
   (** Linked log instantiated using {{!Irmin_mem} in-memory backend} provided by
       [Irmin_mem], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
       CAS maker {!Cas_maker.Mem} *)
-  module Mem (V : Irmin.Type.S) :
+  module Mem (C : Cas_maker.S) (V : Irmin.Type.S) :
     S
       with type value = V.t
        and type Store.key = string list

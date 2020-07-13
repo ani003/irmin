@@ -79,7 +79,8 @@ struct
     | None -> failwith "key not found in the store"
     | Some v -> return v
 
-  let sort l = let compare = Irmin.Type.compare T.t in 
+  let sort l =
+    let compare = Irmin.Type.compare T.t in
     List.sort (fun i1 i2 -> compare i2.L.time i1.L.time) l
 
   let merge ~old:_ v1 v2 =
@@ -188,19 +189,19 @@ end = struct
   let read_all ~path t = get_cursor t ~path >>= read ~num_items:max_int >|= fst
 end
 
-module FS (V : Irmin.Type.S) =
+module FS (C : Cas_maker.S) (V : Irmin.Type.S) =
   Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)
     (Irmin.Hash.SHA1)
-    (Cas_maker.Mem)
+    (C)
     (Time.Unix)
     (Irmin.Hash.SHA1)
     (V)
-module Mem (V : Irmin.Type.S) =
+module Mem (C : Cas_maker.S) (V : Irmin.Type.S) =
   Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)
     (Irmin.Hash.SHA1)
-    (Cas_maker.Mem)
+    (C)
     (Time.Unix)
     (Irmin.Hash.SHA1)
     (V)
