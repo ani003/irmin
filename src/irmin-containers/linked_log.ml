@@ -21,11 +21,8 @@ let return = Lwt.return
 
 let empty_info = Irmin.Info.none
 
-type ('a, 'b, 'c) log_item = { time : 'a; msg : 'b; prev : 'c option }
-
-module Log_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) :
-  Irmin.Type.S with type t = (T.t, V.t, K.t) log_item = struct
-  type t = (T.t, V.t, K.t) log_item
+module Log_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) = struct
+  type t = { time : T.t; msg : V.t; prev : K.t option }
 
   let t =
     let open Irmin.Type in
@@ -36,15 +33,10 @@ module Log_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) :
     |> sealr
 end
 
-type ('a, 'b, 'c) store_item =
-  | Value of ('a, 'b, 'c) log_item
-  | Merge of ('a, 'b, 'c) log_item list
-
-module Store_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) :
-  Irmin.Type.S with type t = (T.t, V.t, K.t) store_item = struct
+module Store_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) = struct
   module L = Log_item (T) (K) (V)
 
-  type t = (T.t, V.t, K.t) store_item
+  type t = Value of L.t | Merge of L.t list
 
   let t =
     let open Irmin.Type in
@@ -55,12 +47,19 @@ module Store_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) :
     |> sealv
 end
 
-module Log_ops
+module Linked_log
     (C : Cas_maker.S)
     (T : Time.S)
     (K : Irmin.Hash.S)
     (V : Irmin.Type.S) =
 struct
+  type t = K.t
+
+  let t = K.t
+
+  module L = Log_item (T) (K) (V)
+  module S = Store_item (T) (K) (V)
+
   module Store = struct
     include C.CAS_Maker (K) (Store_item (T) (K) (V))
 
@@ -77,43 +76,25 @@ struct
   let read_key k =
     Store.get_store () >>= fun store ->
     Store.find store k >>= function
-    | None -> failwith "not found"
+    | None -> failwith "key not found in the store"
     | Some v -> return v
 
-  let sort l = List.sort (fun i1 i2 -> T.compare i2.time i1.time) l
-end
-
-module Linked_log
-    (C : Cas_maker.S)
-    (T : Time.S)
-    (K : Irmin.Hash.S)
-    (V : Irmin.Type.S) =
-struct
-  type t = K.t
-
-  let t = K.t
-
-  include Log_ops (C) (T) (K) (V)
+  let sort l = List.sort (fun i1 i2 -> T.compare i2.L.time i1.L.time) l
 
   let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
     Store.get_store () >>= fun store ->
     Store.find store v1 >>= fun v1 ->
     Store.find store v2 >>= fun v2 ->
-    let lv1 =
-      match v1 with
+    let convert_to_list = function
       | None -> []
-      | Some (Value v) -> [ v ]
-      | Some (Merge lv) -> lv
+      | Some (S.Value v) -> [ v ]
+      | Some (S.Merge lv) -> lv
     in
-    let lv2 =
-      match v2 with
-      | None -> []
-      | Some (Value v) -> [ v ]
-      | Some (Merge lv) -> lv
-    in
-    Store.batch store (fun t -> Store.add t (Merge (sort @@ lv1 @ lv2)))
-    >>= fun m -> ok m
+    let lv1 = convert_to_list v1 in
+    let lv2 = convert_to_list v2 in
+    Store.batch store (fun t -> Store.add t (S.Merge (sort @@ lv1 @ lv2)))
+    >>= ok
 
   let merge = Irmin.Merge.(option (v t merge))
 end
@@ -162,7 +143,7 @@ end = struct
 
   type cursor = {
     seen : HashSet.t;
-    cache : (T.t, V.t, K.t) log_item list;
+    cache : Log_item(T)(K)(V).t list;
     store : Store.t;
   }
 
@@ -171,18 +152,15 @@ end = struct
     L.append prev e >>= fun v -> Store.set_exn empty_info t path v
 
   let get_cursor ~path store =
-    let mk_cursor k cache =
-      return @@ Some { seen = HashSet.singleton k; cache; store }
-    in
+    let mk_cursor k cache = Some { seen = HashSet.singleton k; cache; store } in
     Store.find store path >>= function
     | None -> return None
     | Some k -> (
-        L.read_key k >>= function
+        L.read_key k >|= function
         | Value v -> mk_cursor k [ v ]
         | Merge l -> mk_cursor k l )
 
   let rec read_log cursor num_items acc =
-    let open L in
     if num_items <= 0 then return (List.rev acc, Some cursor)
     else
       match cursor.cache with
@@ -194,14 +172,14 @@ end = struct
             read_log { cursor with cache = xs } (num_items - 1) (msg :: acc)
           else
             let seen = HashSet.add pk cursor.seen in
-            read_key pk >>= function
+            L.read_key pk >>= function
             | Value v ->
                 read_log
-                  { cursor with seen; cache = sort (v :: xs) }
+                  { cursor with seen; cache = L.sort (v :: xs) }
                   (num_items - 1) (msg :: acc)
             | Merge l ->
                 read_log
-                  { cursor with seen; cache = sort (l @ xs) }
+                  { cursor with seen; cache = L.sort (l @ xs) }
                   (num_items - 1) (msg :: acc) )
 
   let read ~num_items cursor = read_log cursor num_items []
@@ -209,8 +187,7 @@ end = struct
   let read_all ~path t =
     get_cursor t ~path >>= function
     | None -> return []
-    | Some cursor ->
-        read cursor ~num_items:max_int >>= fun (log, _) -> return log
+    | Some cursor -> read cursor ~num_items:max_int >|= fst
 end
 
 module FS (V : Irmin.Type.S) =

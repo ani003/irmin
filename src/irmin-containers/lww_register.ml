@@ -70,10 +70,7 @@ end = struct
 
   type value = V.t
 
-  let read ~path t =
-    Store.find t path >>= function
-    | None -> return None
-    | Some (v, _) -> return (Some v)
+  let read ~path t = Store.find t path >|= Option.map fst
 
   let write ?(info = empty_info) ~path t v =
     let timestamp = T.get_time () in
