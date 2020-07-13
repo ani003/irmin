@@ -48,7 +48,7 @@ module Store_item (T : Time.S) (K : Irmin.Hash.S) (V : Irmin.Type.S) = struct
 end
 
 module Linked_log
-    (C : Cas_maker.S)
+    (C : Stores.Cas_maker)
     (T : Time.S)
     (K : Irmin.Hash.S)
     (V : Irmin.Type.S) =
@@ -102,36 +102,24 @@ struct
 end
 
 module type S = sig
-  module Store : Irmin.S
-
-  type value
+  include Blob_log.S
 
   type cursor
-
-  val append : path:Store.key -> Store.t -> value -> unit Lwt.t
 
   val get_cursor : path:Store.key -> Store.t -> cursor Lwt.t
 
   val read : num_items:int -> cursor -> (value list * cursor) Lwt.t
-
-  val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
 
 module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S)
-    (C : Cas_maker.S)
+    (Backend : Stores.Store_maker)
+    (C : Stores.Cas_maker)
     (T : Time.S)
     (K : Irmin.Hash.S)
-    (V : Irmin.Type.S) : sig
-  include
-    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
-end = struct
+    (V : Irmin.Type.S) =
+struct
   module L = Linked_log (C) (T) (K) (V)
-  module Store = Backend (M) (L) (P) (B) (H)
+  module Store = Backend (L)
 
   module Set_elt = struct
     type t = K.t
@@ -189,19 +177,7 @@ end = struct
   let read_all ~path t = get_cursor t ~path >>= read ~num_items:max_int >|= fst
 end
 
-module FS (C : Cas_maker.S) (V : Irmin.Type.S) =
-  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-    (C)
-    (Time.Unix)
-    (Irmin.Hash.SHA1)
-    (V)
-module Mem (C : Cas_maker.S) (V : Irmin.Type.S) =
-  Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-    (C)
-    (Time.Unix)
-    (Irmin.Hash.SHA1)
-    (V)
+module FS (C : Stores.Cas_maker) (V : Irmin.Type.S) =
+  Make (Irmin_unix.FS.KV) (C) (Time.Unix) (Irmin.Hash.SHA1) (V)
+module Mem (C : Stores.Cas_maker) (V : Irmin.Type.S) =
+  Make (Irmin_mem.KV) (C) (Time.Unix) (Irmin.Hash.SHA1) (V)

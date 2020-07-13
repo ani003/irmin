@@ -21,11 +21,8 @@
 
 (** Signature for the timestamps *)
 module type S = sig
-  type t
+  include Irmin.Type.S
   (** Type of the timestamp *)
-
-  val t : t Irmin.Type.t
-  (** Corresponding irmin type of the timestamp *)
 
   val get_time : unit -> t
   (** Returns a timestamp *)

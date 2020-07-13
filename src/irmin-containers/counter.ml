@@ -41,17 +41,8 @@ module type S = sig
   val read : path:Store.key -> Store.t -> int64 Lwt.t
 end
 
-module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S) : sig
-  include S with type Store.key = P.t and type Store.branch = B.t
-end = struct
-  module Store = Backend (M) (Counter) (P) (B) (H)
-
-  type value = Counter.t
+module Make (Backend : Stores.Store_maker) = struct
+  module Store = Backend (Counter)
 
   let modify by info t path fn =
     Store.find t path >>= function
@@ -68,11 +59,5 @@ end = struct
     Store.find t path >>= function None -> return 0L | Some v -> return v
 end
 
-module FS =
-  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-module Mem =
-  Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
+module FS = Make (Irmin_unix.FS.KV)
+module Mem = Make (Irmin_mem.KV)

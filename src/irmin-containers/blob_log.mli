@@ -15,17 +15,18 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** [Blob_log] is the implementation of the log in which two copies of the log
-    do not share the common predecessor. The type of the log entries and the
-    method to obtain timestamp are provided by the user. Merging does the
-    following: the newer entries from each branch, with respect to the least
-    common ancestor, are taken, merged and then appended in front of the LCA *)
+(** [Blob_log] is the implementation of log in which it is maintained as a
+    single unit, or blob. Hence, two versions of the log cannot share their
+    common predecessor. The type of values to be stored as well as a method to
+    obtain timestamps are provided by the user. Merging does the following: the
+    newer entries from each branch, with respect to the least common ancestor,
+    are taken, merged and then appended in front of the LCA *)
 
 (** Signature of [Blob_log] *)
 module type S = sig
   module Store : Irmin.S
-  (** Store for the blob log. All store related operations like branching,
-      cloning, merging, etc are done through this module. *)
+  (** Store for the log. All store related operations like branching, cloning,
+      merging, etc are done through this module. *)
 
   type value
   (** Type of log entry *)
@@ -39,28 +40,27 @@ end
 
 (** [Make] returns a mergeable blob log using the backend and other parameters
     as specified by the user. *)
-module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S)
-    (T : Time.S)
-    (V : Irmin.Type.S) :
-  S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+module Make (Backend : Stores.Store_maker) (T : Time.S) (V : Irmin.Type.S) :
+  S
+    with type value = V.t
+     and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** Blob log instantiated using {{!Irmin_unix.FS} FS backend} provided by
+(** Blob log instantiated using the {{!Irmin_unix.FS} FS backend} provided by
     [Irmin_unix] and the timestamp method {!Time.Unix} *)
 module FS (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** Blob log instantiated using {{!Irmin_mem} in-memory backend} provided by
+(** Blob log instantiated using the {{!Irmin_mem} in-memory backend} provided by
     [Irmin_mem] and the timestamp method {!Time.Unix} *)
 module Mem (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string

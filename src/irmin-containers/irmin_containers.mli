@@ -22,49 +22,38 @@
     needs with regards to the type of backend being used and its accompanying
     parameters. Along with that, [Irmin_containers] also provides data
     structures with suitable instantiations performed using two backends: the
-    {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and
+    {{!Irmin_mem} in-memory backend} provided by [Irmin_mem] and the
     {{!Irmin_unix.FS} FS backend} provided by [Irmin_unix]. *)
 
-(** {1 Auxiliary modules} *)
+(** {1 Auxiliary signatures and modules} *)
 
+module type Store_maker = Stores.Store_maker
+(** {2 Store_maker}
+
+    [Store_maker] is the signature for the backend input to the data structures.
+    The Irmin stores of the data structures are constructed using modules of
+    this type *)
+
+module type Cas_maker = Stores.Cas_maker
+(** {2 Cas_maker}
+
+    [Cas_maker] is the signature for the store which will be used to maintain
+    linked data structures. The elements are hashed into this store and the hash
+    value is used to construct the linkages. *)
+
+module Time = Time
 (** {2 Time}
 
     [Time] specifies the method to obtain timestamps for the values to be
     stored. It is necessary for the timestamps to be monotonic for the data
     structures to function properly. *)
-module Time : sig
-  (** Signature for [Time] *)
-  module type S = sig
-    include Time.S
-    (** @inline *)
-  end
-
-  module Unix : S
-  (** A timestamp method using [Unix.gettimeofday] *)
-end
-
-(** {2 Cas_maker}
-
-    [Cas_maker] is the content addressable store maker required by some of the
-    data structures. *)
-module Cas_maker : sig
-  (** [Cas_maker] Signature *)
-  module type S = sig
-    include Cas_maker.S
-    (** @inline *)
-  end
-
-  module Mem : S
-  (** A CAS maker implementation using {!Irmin_mem} *)
-end
 
 (** {1 Data structures}*)
 
 (** {2 Counter}
 
-    [Counter] is the irmin implementation of the counter data structure. This
-    module supports an int64 counter along with operations to increment,
-    decrement and read the value of the counter. *)
+    [Counter] is the implementation of the [int64] counter. This module supports
+    operations to increment, decrement and read the value of the counter. *)
 module Counter : sig
   (** Counter signature *)
   module type S = sig
@@ -73,22 +62,27 @@ module Counter : sig
   end
 
   (** Constructor for counter *)
-  module Make
-      (Backend : Irmin.S_MAKER)
-      (M : Irmin.Metadata.S)
-      (P : Irmin.Path.S)
-      (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S) :
-    S with type Store.key = P.t and type Store.branch = B.t
+  module Make (Backend : Store_maker) :
+    S
+      with type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** Counter instantiated using {{!Irmin_unix.FS} FS backend} provided by
+  (** Counter instantiated using the {{!Irmin_unix.FS} FS backend} provided by
       [Irmin_unix] *)
-  module FS : S with type Store.key = string list and type Store.branch = string
+  module FS :
+    S
+      with type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** Counter instantiated using {{!Irmin_mem} in-memory backend} provided by
-      [Irmin_mem] *)
+  (** Counter instantiated using the {{!Irmin_mem} in-memory backend} provided
+      by [Irmin_mem] *)
   module Mem :
-    S with type Store.key = string list and type Store.branch = string
+    S
+      with type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 end
 
 (** {2 Last-write-wins register}
@@ -105,39 +99,39 @@ module Lww_register : sig
   end
 
   (** Constructor for last-write-wins register *)
-  module Make
-      (Backend : Irmin.S_MAKER)
-      (M : Irmin.Metadata.S)
-      (P : Irmin.Path.S)
-      (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S)
-      (T : Time.S)
-      (V : Irmin.Type.S) :
-    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+  module Make (Backend : Store_maker) (T : Time.S) (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
-      [Irmin_unix] and the timestamp method {!Time.Unix} *)
+  (** LWW register instantiated using the {{!Irmin_unix.FS} FS backend} provided
+      by [Irmin_unix] and the timestamp method {!Time.Unix} *)
   module FS (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided
-      by [Irmin_mem] and the timestamp method {!Time.Unix} *)
+  (** LWW register instantiated using the {{!Irmin_mem} in-memory backend}
+      provided by [Irmin_mem] and the timestamp method {!Time.Unix} *)
   module Mem (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 end
 
 (** {2 Blob log}
 
-    [Blob_log] is the implementation of log in which two copies do not share
-    their common predecessor. Each copy is maintained as a separate log. The
-    blob log supports appending an entry into the log and reading the entire
-    log. *)
+    [Blob_log] is the implementation of log in which it is maintained as a
+    single unit, or blob. Hence, two versions of the log cannot share their
+    common predecessor. The type of values to be stored as well as a method to
+    obtain timestamps are provided by the user. The blob log supports appending
+    an entry into the log and reading the entire log. *)
 module Blob_log : sig
   (** Signature of the blob log *)
   module type S = sig
@@ -146,40 +140,42 @@ module Blob_log : sig
   end
 
   (** Constructor for blob log *)
-  module Make
-      (Backend : Irmin.S_MAKER)
-      (M : Irmin.Metadata.S)
-      (P : Irmin.Path.S)
-      (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S)
-      (T : Time.S)
-      (V : Irmin.Type.S) :
-    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+  module Make (Backend : Store_maker) (T : Time.S) (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** Blob log instantiated using {{!Irmin_unix.FS} FS backend} provided by
+  (** Blob log instantiated using the {{!Irmin_unix.FS} FS backend} provided by
       [Irmin_unix] and the timestamp method {!Time.Unix} *)
   module FS (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** Blob log instantiated using {{!Irmin_mem} in-memory backend} provided by
-      [Irmin_mem] and the timestamp method {!Time.Unix} *)
+  (** Blob log instantiated using the {{!Irmin_mem} in-memory backend} provided
+      by [Irmin_mem] and the timestamp method {!Time.Unix} *)
   module Mem (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 end
 
 (** {2 Linked log}
 
-    [Linked_log] is the linked list implementation of log in which two copies
-    share their common predecessor. The log supports appending an entry into the
-    log, getting a cursor, reading a certain number of elements from the cursor
-    and reading the entire log. A content addressable store, timestamp, a hash,
-    and type of log entries must be provided. *)
+    [Linked_log] is the linked list implementation of log. Due to the linked
+    property, two versions of the log share their common predecessor. As it is a
+    linked data structure, a content addressable store of type {!Cas_maker} is
+    required. Along with that, a method to obtain timestamps, a hash for the
+    content addressable store and the type of values stored must also be
+    provided. The linked log supports appending an entry into the log, getting a
+    cursor, reading a certain number of elements from the cursor and reading the
+    entire log. *)
 module Linked_log : sig
   (** [Linked_log] signature *)
   module type S = sig
@@ -189,32 +185,33 @@ module Linked_log : sig
 
   (** Constructor for linked log *)
   module Make
-      (Backend : Irmin.S_MAKER)
-      (M : Irmin.Metadata.S)
-      (P : Irmin.Path.S)
-      (B : Irmin.Branch.S)
-      (H : Irmin.Hash.S)
-      (C : Cas_maker.S)
+      (Backend : Store_maker)
+      (C : Cas_maker)
       (T : Time.S)
       (K : Irmin.Hash.S)
       (V : Irmin.Type.S) :
-    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
-
-  (** Linked log instantiated using {{!Irmin_unix.FS} FS backend} provided by
-      [Irmin_unix], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
-      CAS maker {!Cas_maker.Mem} *)
-  module FS (C : Cas_maker.S) (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 
-  (** Linked log instantiated using {{!Irmin_mem} in-memory backend} provided by
-      [Irmin_mem], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and
-      CAS maker {!Cas_maker.Mem} *)
-  module Mem (C : Cas_maker.S) (V : Irmin.Type.S) :
+  (** Linked log instantiated using the {{!Irmin_unix.FS} FS backend} provided
+      by [Irmin_unix], timestamp method {!Time.Unix} and hash {!Irmin.Hash.SHA1} *)
+  module FS (C : Cas_maker) (V : Irmin.Type.S) :
     S
       with type value = V.t
-       and type Store.key = string list
        and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
+
+  (** Linked log instantiated using the {{!Irmin_mem} in-memory backend}
+      provided by [Irmin_mem], timestamp method {!Time.Unix} and hash
+      {!Irmin.Hash.SHA1} *)
+  module Mem (C : Cas_maker) (V : Irmin.Type.S) :
+    S
+      with type value = V.t
+       and type Store.branch = string
+       and type Store.key = string list
+       and type Store.step = string
 end

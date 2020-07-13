@@ -28,10 +28,10 @@ module type S = sig
       branching, cloning, merging, etc are done through this module. *)
 
   type value
-  (** Type of value stored in the register *)
+  (** Type of values stored in the register *)
 
   val read : path:Store.key -> Store.t -> value option Lwt.t
-  (** Reads the value from the register. Returns None if no value is written *)
+  (** Reads the value from the register. Returns [None] if no value is written *)
 
   val write :
     ?info:Irmin.Info.f -> path:Store.key -> Store.t -> value -> unit Lwt.t
@@ -40,28 +40,27 @@ end
 
 (** [Make] returns a mergeable last-write-wins register using the backend and
     other parameters as specified by the user. *)
-module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S)
-    (T : Time.S)
-    (V : Irmin.Type.S) :
-  S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
+module Make (Backend : Stores.Store_maker) (T : Time.S) (V : Irmin.Type.S) :
+  S
+    with type value = V.t
+     and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
-    [Irmin_unix] and the timestamp method {!Time.Unix} *)
+(** LWW register instantiated using the {{!Irmin_unix.FS} FS backend} provided
+    by [Irmin_unix] and the timestamp method {!Time.Unix} *)
 module FS (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided by
-    [Irmin_mem] and the timestamp method {!Time.Unix} *)
+(** LWW register instantiated using the {{!Irmin_mem} in-memory backend}
+    provided by [Irmin_mem] and the timestamp method {!Time.Unix} *)
 module Mem (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string

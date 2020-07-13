@@ -15,8 +15,11 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
+module type Store_maker = Stores.Store_maker
+
+module type Cas_maker = Stores.Cas_maker
+
 module Time = Time
-module Cas_maker = Cas_maker
 module Counter = Counter
 module Lww_register = Lww_register
 module Blob_log = Blob_log

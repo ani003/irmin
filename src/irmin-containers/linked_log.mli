@@ -15,68 +15,59 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-(** [Linked_log] is a linked list implementation of the log. In this, two copies
-    of the log share their common predecessor. The type of the log entries, the
-    method to obtain timestamp, a hashing method and a content addressable store
-    maker are provided by the user. *)
+(** [Linked_log] is the linked list implementation of log. Due to the linked
+    property, two versions of the log share their common predecessor. As it is a
+    linked data structure, a content addressable store is required. Along with
+    that, a method to obtain timestamps, a hash for the content addressable
+    store and the type of values stored must also be provided. *)
 
 (** Signature of [Linked_log] *)
 module type S = sig
-  module Store : Irmin.S
-  (** Store for the log. All store related operations like branching, cloning,
-      merging, etc are done through this module. *)
-
-  type value
-  (** Type of log entry *)
+  include Blob_log.S
+  (** @inline *)
 
   type cursor
   (** Type of cursor. Cursor is like a marker from which a certain number of
       entries can be read *)
 
-  val append : path:Store.key -> Store.t -> value -> unit Lwt.t
-  (** Append an entry to the log *)
-
   val get_cursor : path:Store.key -> Store.t -> cursor Lwt.t
-  (** Get the cursor *)
+  (** Create a new cursor over the log entires at the given path *)
 
   val read : num_items:int -> cursor -> (value list * cursor) Lwt.t
-  (** Read a certain number of entries starting from the cursor. If the number
-      specified is greater than the number of log entires from the cursor, the
-      log is read till the end. If the input cursor has already reached the end,
-      then an empty list is returned *)
-
-  val read_all : path:Store.key -> Store.t -> value list Lwt.t
-  (** Read the entire log *)
+  (** Read at most [num_items] entries from the cursor. If the number specified
+      is greater than the number of log entries from the cursor, the log is read
+      till the end. If the input cursor has already reached the end, then an
+      empty list is returned *)
 end
 
 (** [Make] returns a mergeable linked log using the backend and other parameters
     as specified by the user. *)
 module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S)
-    (C : Cas_maker.S)
+    (Backend : Stores.Store_maker)
+    (C : Stores.Cas_maker)
     (T : Time.S)
     (K : Irmin.Hash.S)
     (V : Irmin.Type.S) :
-  S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
-
-(** Linked log instantiated using {{!Irmin_unix.FS} FS backend} provided by
-    [Irmin_unix], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and CAS
-    maker {!Cas_maker.Mem} *)
-module FS (C : Cas_maker.S) (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** Linked log instantiated using {{!Irmin_mem} in-memory backend} provided by
-    [Irmin_mem], timestamp method {!Time.Unix}, hash {!Irmin.Hash.SHA1} and CAS
-    maker {!Cas_maker.Mem} *)
-module Mem (C : Cas_maker.S) (V : Irmin.Type.S) :
+(** Linked log instantiated using the {{!Irmin_unix.FS} FS backend} provided by
+    [Irmin_unix], timestamp method {!Time.Unix} and hash {!Irmin.Hash.SHA1} *)
+module FS (C : Stores.Cas_maker) (V : Irmin.Type.S) :
   S
     with type value = V.t
-     and type Store.key = string list
      and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
+
+(** Linked log instantiated using the {{!Irmin_mem} in-memory backend} provided
+    by [Irmin_mem], timestamp method {!Time.Unix} and hash {!Irmin.Hash.SHA1} *)
+module Mem (C : Stores.Cas_maker) (V : Irmin.Type.S) :
+  S
+    with type value = V.t
+     and type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string

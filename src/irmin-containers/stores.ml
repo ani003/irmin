@@ -15,14 +15,15 @@
  * OR IN CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE.
  *)
 
-module type S = sig
+module type Store_maker = functor (C : Irmin.Contents.S) ->
+  Irmin.S
+    with type contents = C.t
+     and type branch = string
+     and type key = string list
+     and type step = string
+
+module type Cas_maker = sig
   module CAS_Maker : Irmin.CONTENT_ADDRESSABLE_STORE_MAKER
 
   val config : Irmin.config
-end
-
-module Mem : S = struct
-  module CAS_Maker = Irmin.Content_addressable (Irmin_mem.Append_only)
-
-  let config = Irmin_mem.config ()
 end

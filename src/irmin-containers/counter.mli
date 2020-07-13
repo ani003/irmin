@@ -41,17 +41,24 @@ end
 
 (** [Make] returns a mergeable counter using the backend and other parameters as
     specified by the user. *)
-module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S) : S with type Store.key = P.t and type Store.branch = B.t
+module Make (Backend : Stores.Store_maker) :
+  S
+    with type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** Counter instantiated using {{!Irmin_unix.FS} FS backend} provided by
+(** Counter instantiated using the {{!Irmin_unix.FS} FS backend} provided by
     [Irmin_unix] *)
-module FS : S with type Store.key = string list and type Store.branch = string
+module FS :
+  S
+    with type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string
 
-(** Counter instantiated using {{!Irmin_mem} in-memory backend} provided by
+(** Counter instantiated using the {{!Irmin_mem} in-memory backend} provided by
     [Irmin_mem] *)
-module Mem : S with type Store.key = string list and type Store.branch = string
+module Mem :
+  S
+    with type Store.branch = string
+     and type Store.key = string list
+     and type Store.step = string

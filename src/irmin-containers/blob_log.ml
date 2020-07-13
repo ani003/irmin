@@ -64,18 +64,9 @@ module type S = sig
   val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
 
-module Make
-    (Backend : Irmin.S_MAKER)
-    (M : Irmin.Metadata.S)
-    (P : Irmin.Path.S)
-    (B : Irmin.Branch.S)
-    (H : Irmin.Hash.S)
-    (T : Time.S)
-    (V : Irmin.Type.S) : sig
-  include
-    S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
-end = struct
-  module Store = Backend (M) (Blob_log (T) (V)) (P) (B) (H)
+module Make (Backend : Stores.Store_maker) (T : Time.S) (V : Irmin.Type.S) =
+struct
+  module Store = Backend (Blob_log (T) (V))
 
   type value = V.t
 
@@ -92,15 +83,5 @@ end = struct
     | Some l -> return (List.map (fun (v, _) -> v) l)
 end
 
-module FS (V : Irmin.Type.S) =
-  Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-    (Time.Unix)
-    (V)
-module Mem (V : Irmin.Type.S) =
-  Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
-    (Irmin.Branch.String)
-    (Irmin.Hash.SHA1)
-    (Time.Unix)
-    (V)
+module FS (V : Irmin.Type.S) = Make (Irmin_unix.FS.KV) (Time.Unix) (V)
+module Mem (V : Irmin.Type.S) = Make (Irmin_mem.KV) (Time.Unix) (V)
