@@ -21,15 +21,15 @@ let return = Lwt.return
 
 let empty_info = Irmin.Info.none
 
-module LWW (T : Time.S) (V : Irmin.Type.S) : Irmin.Contents.S with type t = V.t * T.t =
-struct
+module LWW (T : Time.S) (V : Irmin.Type.S) :
+  Irmin.Contents.S with type t = V.t * T.t = struct
   type t = V.t * T.t
 
   let t = Irmin.Type.(pair V.t T.t)
 
   let compare (v1, t1) (v2, t2) =
     let t_comp = Irmin.Type.compare T.t in
-    let v_comp = Irmin.Type.compare V.t in 
+    let v_comp = Irmin.Type.compare V.t in
     let res = t_comp t1 t2 in
     if res = 0 then v_comp v1 v2 else res
 

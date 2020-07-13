@@ -26,7 +26,7 @@ module type S = sig
 
   val t : t Irmin.Type.t
   (** Corresponding irmin type of the timestamp *)
-  
+
   val get_time : unit -> t
   (** Returns a timestamp *)
 end
