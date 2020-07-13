@@ -21,21 +21,17 @@ let return = Lwt.return
 
 let empty_info = Irmin.Info.none
 
-module type Input = sig
-  include Irmin.Type.S
-
-  val compare : t -> t -> int
-end
-
-module LWW (T : Time.S) (V : Input) : Irmin.Contents.S with type t = V.t * T.t =
+module LWW (T : Time.S) (V : Irmin.Type.S) : Irmin.Contents.S with type t = V.t * T.t =
 struct
   type t = V.t * T.t
 
   let t = Irmin.Type.(pair V.t T.t)
 
   let compare (v1, t1) (v2, t2) =
-    let res = T.compare t1 t2 in
-    if res = 0 then V.compare v1 v2 else res
+    let t_comp = Irmin.Type.compare T.t in
+    let v_comp = Irmin.Type.compare V.t in 
+    let res = t_comp t1 t2 in
+    if res = 0 then v_comp v1 v2 else res
 
   let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
@@ -62,7 +58,7 @@ module Make
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
     (T : Time.S)
-    (V : Input) : sig
+    (V : Irmin.Type.S) : sig
   include
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 end = struct
@@ -77,13 +73,13 @@ end = struct
     Store.set_exn ~info t path (v, timestamp)
 end
 
-module FS (V : Input) =
+module FS (V : Irmin.Type.S) =
   Make (Irmin_unix.FS.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)
     (Irmin.Hash.SHA1)
     (Time.Unix)
     (V)
-module Mem (V : Input) =
+module Mem (V : Irmin.Type.S) =
   Make (Irmin_mem.Make) (Irmin.Metadata.None) (Irmin.Path.String_list)
     (Irmin.Branch.String)
     (Irmin.Hash.SHA1)

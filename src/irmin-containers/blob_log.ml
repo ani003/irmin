@@ -27,12 +27,13 @@ module Blob_log (T : Time.S) (V : Irmin.Type.S) :
 
   let t = Irmin.Type.(list (pair V.t T.t))
 
-  let compare (_, t1) (_, t2) = T.compare t1 t2
+  let compare (_, t1) (_, t2) = Irmin.Type.compare T.t t1 t2
 
   let newer_than timestamp entries =
+    let t_comp = Irmin.Type.compare T.t in
     let rec util acc = function
       | [] -> List.rev acc
-      | (_, x) :: _ when T.compare x timestamp <= 0 -> List.rev acc
+      | (_, x) :: _ when t_comp x timestamp <= 0 -> List.rev acc
       | h :: t -> util (h :: acc) t
     in
     util [] entries

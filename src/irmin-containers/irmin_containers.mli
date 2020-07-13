@@ -98,12 +98,6 @@ end
     timestamps are provided by the user. This module supports reading and
     writing to the register. *)
 module Lww_register : sig
-  (** [Input] specifies the type of value to be stored in the register. *)
-  module type Input = sig
-    include Lww_register.Input
-    (** @inline *)
-  end
-
   (** Lww_register signature *)
   module type S = sig
     include Lww_register.S
@@ -118,12 +112,12 @@ module Lww_register : sig
       (B : Irmin.Branch.S)
       (H : Irmin.Hash.S)
       (T : Time.S)
-      (V : Input) :
+      (V : Irmin.Type.S) :
     S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
   (** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
       [Irmin_unix] and the timestamp method {!Time.Unix} *)
-  module FS (V : Input) :
+  module FS (V : Irmin.Type.S) :
     S
       with type value = V.t
        and type Store.key = string list
@@ -131,7 +125,7 @@ module Lww_register : sig
 
   (** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided
       by [Irmin_mem] and the timestamp method {!Time.Unix} *)
-  module Mem (V : Input) :
+  module Mem (V : Irmin.Type.S) :
     S
       with type value = V.t
        and type Store.key = string list

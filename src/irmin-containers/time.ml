@@ -18,8 +18,6 @@
 module type S = sig
   include Irmin.Type.S
 
-  val compare : t -> t -> int
-
   val get_time : unit -> t
 end
 
@@ -27,8 +25,6 @@ module Unix : S = struct
   type t = float
 
   let t = Irmin.Type.float
-
-  let compare = Float.compare
 
   let get_time () = Unix.gettimeofday ()
 end

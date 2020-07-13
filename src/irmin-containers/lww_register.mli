@@ -21,16 +21,6 @@
     two values have the same timestamp, then the larger value is selected based
     on the compare specified by the user. *)
 
-(** [Input] specifies the type of value to be stored in the register. *)
-module type Input = sig
-  include Irmin.Type.S
-  (** Type information about the value to be stored. *)
-
-  val compare : t -> t -> int
-  (** Comparator for values of the type specified above. This is used to break
-      ties while merging *)
-end
-
 (** Signature of [Lww_register] *)
 module type S = sig
   module Store : Irmin.S
@@ -57,12 +47,12 @@ module Make
     (B : Irmin.Branch.S)
     (H : Irmin.Hash.S)
     (T : Time.S)
-    (V : Input) :
+    (V : Irmin.Type.S) :
   S with type value = V.t and type Store.key = P.t and type Store.branch = B.t
 
 (** LWW register instantiated using {{!Irmin_unix.FS} FS backend} provided by
     [Irmin_unix] and the timestamp method {!Time.Unix} *)
-module FS (V : Input) :
+module FS (V : Irmin.Type.S) :
   S
     with type value = V.t
      and type Store.key = string list
@@ -70,7 +60,7 @@ module FS (V : Input) :
 
 (** LWW register instantiated using {{!Irmin_mem} in-memory backend} provided by
     [Irmin_mem] and the timestamp method {!Time.Unix} *)
-module Mem (V : Input) :
+module Mem (V : Irmin.Type.S) :
   S
     with type value = V.t
      and type Store.key = string list

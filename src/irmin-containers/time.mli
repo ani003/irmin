@@ -26,11 +26,7 @@ module type S = sig
 
   val t : t Irmin.Type.t
   (** Corresponding irmin type of the timestamp *)
-
-  val compare : t -> t -> int
-  (** Comparator for the timestamps. Used to decide the last entry to the
-      register.*)
-
+  
   val get_time : unit -> t
   (** Returns a timestamp *)
 end

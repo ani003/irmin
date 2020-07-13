@@ -79,7 +79,8 @@ struct
     | None -> failwith "key not found in the store"
     | Some v -> return v
 
-  let sort l = List.sort (fun i1 i2 -> T.compare i2.L.time i1.L.time) l
+  let sort l = let compare = Irmin.Type.compare T.t in 
+    List.sort (fun i1 i2 -> compare i2.L.time i1.L.time) l
 
   let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
@@ -134,7 +135,7 @@ end = struct
   module Set_elt = struct
     type t = K.t
 
-    let compare h1 h2 = K.short_hash h1 - K.short_hash h2
+    let compare = Irmin.Type.compare K.t
   end
 
   module HashSet = Set.Make (Set_elt)
