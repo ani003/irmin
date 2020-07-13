@@ -36,10 +36,10 @@ module type S = sig
   val append : path:Store.key -> Store.t -> value -> unit Lwt.t
   (** Append an entry to the log *)
 
-  val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t
+  val get_cursor : path:Store.key -> Store.t -> cursor Lwt.t
   (** Get the cursor *)
 
-  val read : num_items:int -> cursor -> (value list * cursor option) Lwt.t
+  val read : num_items:int -> cursor -> (value list * cursor) Lwt.t
   (** Read a certain number of entries starting from the cursor. If the number
       specified is greater than the number of log entires from the cursor, the
       log is read till the end. If the input cursor has already reached the end,

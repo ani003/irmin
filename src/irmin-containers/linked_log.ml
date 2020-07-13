@@ -108,9 +108,9 @@ module type S = sig
 
   val append : path:Store.key -> Store.t -> value -> unit Lwt.t
 
-  val get_cursor : path:Store.key -> Store.t -> cursor option Lwt.t
+  val get_cursor : path:Store.key -> Store.t -> cursor Lwt.t
 
-  val read : num_items:int -> cursor -> (value list * cursor option) Lwt.t
+  val read : num_items:int -> cursor -> (value list * cursor) Lwt.t
 
   val read_all : path:Store.key -> Store.t -> value list Lwt.t
 end
@@ -152,19 +152,19 @@ end = struct
     L.append prev e >>= fun v -> Store.set_exn empty_info t path v
 
   let get_cursor ~path store =
-    let mk_cursor k cache = Some { seen = HashSet.singleton k; cache; store } in
+    let mk_cursor seen cache = { seen; cache; store } in
     Store.find store path >>= function
-    | None -> return None
+    | None -> return (mk_cursor HashSet.empty [])
     | Some k -> (
         L.read_key k >|= function
-        | Value v -> mk_cursor k [ v ]
-        | Merge l -> mk_cursor k l )
+        | Value v -> mk_cursor (HashSet.singleton k) [ v ]
+        | Merge l -> mk_cursor (HashSet.singleton k) l )
 
   let rec read_log cursor num_items acc =
-    if num_items <= 0 then return (List.rev acc, Some cursor)
+    if num_items <= 0 then return (List.rev acc, cursor)
     else
       match cursor.cache with
-      | [] -> return (List.rev acc, None)
+      | [] -> return (List.rev acc, cursor)
       | { msg; prev = None; _ } :: xs ->
           read_log { cursor with cache = xs } (num_items - 1) (msg :: acc)
       | { msg; prev = Some pk; _ } :: xs -> (
@@ -184,10 +184,7 @@ end = struct
 
   let read ~num_items cursor = read_log cursor num_items []
 
-  let read_all ~path t =
-    get_cursor t ~path >>= function
-    | None -> return []
-    | Some cursor -> read cursor ~num_items:max_int >|= fst
+  let read_all ~path t = get_cursor t ~path >>= read ~num_items:max_int >|= fst
 end
 
 module FS (V : Irmin.Type.S) =
