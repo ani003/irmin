@@ -55,7 +55,8 @@ struct
 
   type value = V.t
 
-  let read ~path t = Store.find t path >|= Option.map fst
+  let read ~path t =
+    Store.find t path >|= function None -> None | Some (v, _) -> Some v
 
   let write ?(info = empty_info) ~path t v =
     let timestamp = T.get_time () in
