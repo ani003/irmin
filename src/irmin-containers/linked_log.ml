@@ -140,7 +140,7 @@ struct
 
   let append ~path t e =
     Store.find t path >>= fun prev ->
-    L.append prev e >>= fun v -> Store.set_exn empty_info t path v
+    L.append prev e >>= fun v -> Store.set_exn ~info:empty_info t path v
 
   let get_cursor ~path store =
     let mk_cursor seen cache = { seen; cache; store } in

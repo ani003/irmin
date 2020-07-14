@@ -74,8 +74,8 @@ struct
 
   let append ~path t v =
     Store.find t path >>= function
-    | None -> Store.set_exn empty_info t path [ create_entry v ]
-    | Some l -> Store.set_exn empty_info t path (create_entry v :: l)
+    | None -> Store.set_exn ~info:empty_info t path [ create_entry v ]
+    | Some l -> Store.set_exn ~info:empty_info t path (create_entry v :: l)
 
   let read_all ~path t =
     Store.find t path >>= function
