@@ -17,8 +17,6 @@
 
 open Lwt.Infix
 
-let return = Lwt.return
-
 let empty_info = Irmin.Info.none
 
 module LWW (T : Time.S) (V : Irmin.Type.S) :
