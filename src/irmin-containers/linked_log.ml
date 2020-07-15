@@ -61,23 +61,29 @@ struct
   module S = Store_item (T) (K) (V)
 
   module Store = struct
-    include C.CAS_Maker (K) (Store_item (T) (K) (V))
+    module CAS = C.CAS_Maker (K) (Store_item (T) (K) (V))
 
     let get_store =
-      let st = v @@ C.config in
+      let st = CAS.v @@ C.config in
       fun () -> st
+      
+    let read st k = CAS.find st k
+      
+    let read_exn st k =
+      CAS.find st k >>= function
+      | None -> failwith "key not found in the store"
+      | Some v -> return v
+      
+    let add st v = CAS.batch st (fun t -> CAS.add t v)
   end
 
   let append prev msg =
     Store.get_store () >>= fun store ->
-    Store.batch store (fun t ->
-        Store.add t (Value { time = T.get_time (); msg; prev }))
+    Store.add store (Value { time = T.get_time (); msg; prev })
 
   let read_key k =
     Store.get_store () >>= fun store ->
-    Store.find store k >>= function
-    | None -> failwith "key not found in the store"
-    | Some v -> return v
+    Store.read_exn store k
 
   let sort l =
     let compare = Irmin.Type.compare T.t in
@@ -86,8 +92,8 @@ struct
   let merge ~old:_ v1 v2 =
     let open Irmin.Merge in
     Store.get_store () >>= fun store ->
-    Store.find store v1 >>= fun v1 ->
-    Store.find store v2 >>= fun v2 ->
+    Store.read store v1 >>= fun v1 ->
+    Store.read store v2 >>= fun v2 ->
     let convert_to_list = function
       | None -> []
       | Some (S.Value v) -> [ v ]
@@ -95,7 +101,7 @@ struct
     in
     let lv1 = convert_to_list v1 in
     let lv2 = convert_to_list v2 in
-    Store.batch store (fun t -> Store.add t (S.Merge (sort @@ lv1 @ lv2)))
+    Store.add store (S.Merge (sort @@ lv1 @ lv2))
     >>= ok
 
   let merge = Irmin.Merge.(option (v t merge))
