@@ -66,14 +66,14 @@ struct
     let get_store =
       let st = CAS.v @@ C.config in
       fun () -> st
-      
+
     let read st k = CAS.find st k
-      
+
     let read_exn st k =
       CAS.find st k >>= function
       | None -> failwith "key not found in the store"
       | Some v -> return v
-      
+
     let add st v = CAS.batch st (fun t -> CAS.add t v)
   end
 
@@ -81,9 +81,7 @@ struct
     Store.get_store () >>= fun store ->
     Store.add store (Value { time = T.get_time (); msg; prev })
 
-  let read_key k =
-    Store.get_store () >>= fun store ->
-    Store.read_exn store k
+  let read_key k = Store.get_store () >>= fun store -> Store.read_exn store k
 
   let sort l =
     let compare = Irmin.Type.compare T.t in
@@ -101,8 +99,7 @@ struct
     in
     let lv1 = convert_to_list v1 in
     let lv2 = convert_to_list v2 in
-    Store.add store (S.Merge (sort @@ lv1 @ lv2))
-    >>= ok
+    Store.add store (S.Merge (sort @@ lv1 @ lv2)) >>= ok
 
   let merge = Irmin.Merge.(option (v t merge))
 end
